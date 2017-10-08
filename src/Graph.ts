@@ -46,23 +46,20 @@ namespace GraphTheory {
         }
 
         public hasVertex(v: T) : boolean {
-            return this.vertices.indexOf(v) !== -1;
+            return this.adjacency_list.has(v);
         }
 
         public hasEdge(from: T, to: T) : boolean {
+
             let e = [from, to].sort();
-            
-            for (let i = 0; i < this.edges.length; i++) {
-                if (this.edges[i].from === e[0] && this.edges[i].to === e[1]) {
-                    return true;
-                }
-            }
-            
-            return false;
+
+            return this.hasVertex(from)
+                && this.hasVertex(to)
+                && this.getAdjacentVertices(e[0]).indexOf(e[1]) !== -1;
         }
 
         public addVertex(v: T) : void {
-            if (this.vertices.indexOf(v) === -1) {
+            if (!this.hasVertex(v)) {
                 this.vertices.push(v);
                 this.adjacency_list.set(v, []);
             }

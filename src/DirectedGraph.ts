@@ -11,13 +11,9 @@ namespace GraphTheory {
         //order matters
         public hasEdge(from: T, to: T) : boolean {
             
-            for (let i = 0; i < this.edges.length; i++) {
-                if (this.edges[i].from === from && this.edges[i].to === to) {
-                    return true;
-                }
-            }
-            
-            return false;
+            return this.hasVertex(from)
+                && this.hasVertex(to)
+                && this.getAdjacentVertices(from).indexOf(to) !== -1;
         }
 
         //are [from, to] and [to, from] in edges ?

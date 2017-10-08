@@ -29,19 +29,16 @@ var GraphTheory;
             }
         }
         hasVertex(v) {
-            return this.vertices.indexOf(v) !== -1;
+            return this.adjacency_list.has(v);
         }
         hasEdge(from, to) {
             let e = [from, to].sort();
-            for (let i = 0; i < this.edges.length; i++) {
-                if (this.edges[i].from === e[0] && this.edges[i].to === e[1]) {
-                    return true;
-                }
-            }
-            return false;
+            return this.hasVertex(from)
+                && this.hasVertex(to)
+                && this.getAdjacentVertices(e[0]).indexOf(e[1]) !== -1;
         }
         addVertex(v) {
-            if (this.vertices.indexOf(v) === -1) {
+            if (!this.hasVertex(v)) {
                 this.vertices.push(v);
                 this.adjacency_list.set(v, []);
             }
@@ -124,12 +121,9 @@ var GraphTheory;
         }
         //order matters
         hasEdge(from, to) {
-            for (let i = 0; i < this.edges.length; i++) {
-                if (this.edges[i].from === from && this.edges[i].to === to) {
-                    return true;
-                }
-            }
-            return false;
+            return this.hasVertex(from)
+                && this.hasVertex(to)
+                && this.getAdjacentVertices(from).indexOf(to) !== -1;
         }
         //are [from, to] and [to, from] in edges ?
         isEdgeUndirected(from, to) {
