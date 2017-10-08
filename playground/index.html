@@ -1,0 +1,59 @@
+<html>
+    <head>
+        <title>Graph Theory Playground</title>
+        <style>
+        	body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+        </style>
+    </head>
+
+    <body>
+        <canvas id='cnv'></canvas>
+
+        <script src='../out/graph_theory.js'></script>
+
+        <script>
+
+            document.addEventListener('DOMContentLoaded', () => {
+
+                let cnv = document.getElementById('cnv');
+                cnv.width = window.innerWidth;
+                cnv.height = window.innerHeight;
+
+                function randomGraph(nb_vertices) {
+
+                    let vertices = [];
+                    let edges = [];
+                    let vertices_coords = new Map();
+
+                    for (let i = 0; i < nb_vertices; i++) {
+                        vertices.push(i);
+                        vertices_coords.set(i, {x: Math.random() * cnv.width, y: Math.random() * cnv.height});
+                    }
+
+                    for (let a of vertices) {
+                        for (let b of vertices) {
+                            if (a === b) continue;
+
+                            edges.push([a, b]);
+                        }
+                    }
+
+                    return {graph: new GraphTheory.DirectedGraph(vertices, edges), coords: vertices_coords};
+                }
+
+                let playground = new PlayGround.PlayGround(cnv, true);
+
+                let resize = () => {
+                    cnv.width = window.innerWidth;
+                    cnv.height = window.innerHeight;
+                    playground.draw();
+                };
+
+                window.addEventListener('resize', resize);
+                resize();
+                
+            });
+        </script>
+    </body>
+</html>

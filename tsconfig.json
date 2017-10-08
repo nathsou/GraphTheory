@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "module": "none",
+        "outFile": "out/graph_theory.js",
+        "sourceMap": true,
+        "target": "es6"
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
