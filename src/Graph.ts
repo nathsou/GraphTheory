@@ -16,6 +16,7 @@ namespace GraphTheory {
         protected vertices: T[];
         protected edges: Edge<T>[];
         protected adjacency_list: Map<T, T[]>;
+        protected directed = false;
 
         constructor(vertices: T[], edges: T[][] | Edge<T>[]) {
             this.vertices = [];
@@ -32,7 +33,7 @@ namespace GraphTheory {
 
                 if (isEdge<T>(edges[e])) {
                     edge = edges[e] as Edge<T>;
-                    edge['cost'] = edge['cost'] ? edge.cost : undefined;
+                    edge['cost'] = edge['cost'];
                 } else {
                     edge = {
                         from: edges[e][0],
@@ -45,17 +46,45 @@ namespace GraphTheory {
             }
         }
 
+        protected getEdge(from: T, to: T) : Edge<T> {
+            let e = [from, to].sort();
+
+            return {
+                from: e[0],
+                to: e[1]
+            };
+        }
+
+        protected getEdgeIndex(edge: Edge<T>) : number {
+
+            if (!this.hasEdge(edge)) {
+                return -1;
+            }
+
+            let e = this.getEdge(edge.from, edge.to);
+            
+            for (let i = 0; i < this.edges.length; i++) {
+                if (this.edges[i].from === e.from && this.edges[i].to === e.to) {
+                    return i;
+                }
+            }  
+
+            return -1;
+        }
+
         public hasVertex(v: T) : boolean {
             return this.adjacency_list.has(v);
         }
 
-        public hasEdge(from: T, to: T) : boolean {
+        public hasEdge(edge: Edge<T>) : boolean {
 
-            let e = [from, to].sort();
+            if (!this.hasVertex(edge.from) || !this.hasVertex(edge.to)) {
+                return false;
+            }
 
-            return this.hasVertex(from)
-                && this.hasVertex(to)
-                && this.getAdjacentVertices(e[0]).indexOf(e[1]) !== -1;
+            let e = this.getEdge(edge.from, edge.to);
+            
+            return this.getAdjacentVertices(e.from).indexOf(e.to) !== -1;  
         }
 
         public addVertex(v: T) : void {
@@ -65,14 +94,30 @@ namespace GraphTheory {
             }
         }
 
+        public removeVertex(v: T) : void {
+            this.adjacency_list.delete(v);
+            this.vertices.splice(this.vertices.indexOf(v), 1);
+        }
+
         public addEdge(edge: Edge<T>) : void {
-            if (this.hasEdge(edge.from, edge.to)) return;
+            if (this.hasEdge(edge)) return;
 
             this.edges.push(edge);
             this.adjacency_list.get(edge.from).push(edge.to);
             if (edge.from !== edge.to) {
                 this.adjacency_list.get(edge.to).push(edge.from);
             }
+        }
+
+        public removeEdge(edge: Edge<T>) : void {
+            let idx = this.getEdgeIndex(edge);
+            
+            if (idx === -1) return;
+
+            let e = this.getEdge(edge.from, edge.to);
+
+            this.adjacency_list.get(e.from).splice(this.adjacency_list.get(e.from).indexOf(e.to), 1);
+            this.edges.splice(idx, 1);
         }
 
         //getters & setters
@@ -110,6 +155,26 @@ namespace GraphTheory {
             }
 
             return true;
+        }
+
+        public isEmpty() : boolean {
+            return this.vertices.length === 0;
+        }
+
+        public getComplementaryGraph() : Graph<T> {
+
+            let edges = [];
+
+            let n = this.vertices.length;
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (i !== j && !this.hasEdge({from: this.vertices[i], to: this.vertices[j]})) {
+                        edges.push([this.vertices[i], this.vertices[j]]);
+                    }
+                }
+            }
+
+            return new Graph<T>(this.vertices.slice(), edges);
         }
 
         protected drawEdge(ctx: CanvasRenderingContext2D,

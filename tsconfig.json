@@ -3,7 +3,8 @@
         "module": "none",
         "outFile": "out/graph_theory.js",
         "sourceMap": true,
-        "target": "es6"
+        "target": "es6",
+        "lib": ["dom","es2017"]
     },
     "exclude": [
         "node_modules"

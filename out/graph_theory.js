@@ -16,7 +16,7 @@ var GraphTheory;
                 let edge;
                 if (isEdge(edges[e])) {
                     edge = edges[e];
-                    edge['cost'] = edge['cost'] ? edge.cost : undefined;
+                    edge['cost'] = edge['cost'];
                 }
                 else {
                     edge = {
@@ -28,14 +28,34 @@ var GraphTheory;
                 this.addEdge(edge);
             }
         }
+        getEdge(from, to) {
+            let e = [from, to].sort();
+            return {
+                from: e[0],
+                to: e[1]
+            };
+        }
+        getEdgeIndex(edge) {
+            if (!this.hasEdge(edge)) {
+                return -1;
+            }
+            let e = this.getEdge(edge.from, edge.to);
+            for (let i = 0; i < this.edges.length; i++) {
+                if (this.edges[i].from === e.from && this.edges[i].to === e.to) {
+                    return i;
+                }
+            }
+            return -1;
+        }
         hasVertex(v) {
             return this.adjacency_list.has(v);
         }
-        hasEdge(from, to) {
-            let e = [from, to].sort();
-            return this.hasVertex(from)
-                && this.hasVertex(to)
-                && this.getAdjacentVertices(e[0]).indexOf(e[1]) !== -1;
+        hasEdge(edge) {
+            if (!this.hasVertex(edge.from) || !this.hasVertex(edge.to)) {
+                return false;
+            }
+            let e = this.getEdge(edge.from, edge.to);
+            return this.getAdjacentVertices(e.from).indexOf(e.to) !== -1;
         }
         addVertex(v) {
             if (!this.hasVertex(v)) {
@@ -43,14 +63,26 @@ var GraphTheory;
                 this.adjacency_list.set(v, []);
             }
         }
+        removeVertex(v) {
+            this.adjacency_list.delete(v);
+            this.vertices.splice(this.vertices.indexOf(v), 1);
+        }
         addEdge(edge) {
-            if (this.hasEdge(edge.from, edge.to))
+            if (this.hasEdge(edge))
                 return;
             this.edges.push(edge);
             this.adjacency_list.get(edge.from).push(edge.to);
             if (edge.from !== edge.to) {
                 this.adjacency_list.get(edge.to).push(edge.from);
             }
+        }
+        removeEdge(edge) {
+            let idx = this.getEdgeIndex(edge);
+            if (idx === -1)
+                return;
+            let e = this.getEdge(edge.from, edge.to);
+            this.adjacency_list.get(e.from).splice(this.adjacency_list.get(e.from).indexOf(e.to), 1);
+            this.edges.splice(idx, 1);
         }
         //getters & setters
         getVertices() {
@@ -77,6 +109,21 @@ var GraphTheory;
                 }
             }
             return true;
+        }
+        isEmpty() {
+            return this.vertices.length === 0;
+        }
+        getComplementaryGraph() {
+            let edges = [];
+            let n = this.vertices.length;
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (i !== j && !this.hasEdge({ from: this.vertices[i], to: this.vertices[j] })) {
+                        edges.push([this.vertices[i], this.vertices[j]]);
+                    }
+                }
+            }
+            return new Graph(this.vertices.slice(), edges);
         }
         drawEdge(ctx, vertex_radius, from, to) {
             ctx.beginPath();
@@ -120,20 +167,21 @@ var GraphTheory;
             super(vertices, edges);
         }
         //order matters
-        hasEdge(from, to) {
-            return this.hasVertex(from)
-                && this.hasVertex(to)
-                && this.getAdjacentVertices(from).indexOf(to) !== -1;
+        getEdge(from, to) {
+            return {
+                from: from,
+                to: to
+            };
         }
         //are [from, to] and [to, from] in edges ?
-        isEdgeUndirected(from, to) {
-            return this.hasEdge(from, to) && this.hasEdge(to, from);
+        isEdgeUndirected(edge) {
+            return this.hasEdge(edge) && this.hasEdge({ from: edge.to, to: edge.from });
         }
         addEdge(edge) {
-            if (this.hasEdge(edge.from, edge.to))
+            if (this.hasEdge(edge))
                 return;
             this.edges.push(edge);
-            if (this.adjacency_list.get(edge.from).indexOf(edge.to) === -1) {
+            if (!this.hasEdge(edge)) {
                 this.adjacency_list.get(edge.from).push(edge.to);
             }
         }
@@ -144,7 +192,7 @@ var GraphTheory;
             }
             return directed;
         }
-        //draw arrows to represent the direction
+        //draw arrows to represent an arc's direction
         drawEdge(ctx, vertex_radius, from, to) {
             ctx.beginPath();
             let a = Math.atan2(to.y - from.y, to.x - from.x);
