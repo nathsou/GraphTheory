@@ -141,11 +141,13 @@ var GraphTheory;
         clone() {
             return new Graph(this.vertices.slice(), this.edges.slice());
         }
-        drawEdge(ctx, vertex_radius, from, to) {
+        drawEdge(ctx, vertex_radius, edge_color, from, to) {
+            ctx.strokeStyle = edge_color;
             ctx.beginPath();
             ctx.moveTo(from.x, from.y);
             ctx.lineTo(to.x, to.y);
             ctx.stroke();
+            ctx.closePath();
         }
         draw(cnv, vertices_coords, options = {
                 vertex_radius: 10,
@@ -159,7 +161,7 @@ var GraphTheory;
             ctx.lineWidth = options.edge_width;
             for (let edge of this.getEdges()) {
                 let origin = vertices_coords.get(edge.from), dst = vertices_coords.get(edge.to);
-                this.drawEdge(ctx, options.vertex_radius, origin, dst);
+                this.drawEdge(ctx, options.vertex_radius, options.edge_color, origin, dst);
                 ctx.closePath();
             }
             ctx.fillStyle = options.vertex_color;
@@ -191,20 +193,16 @@ var GraphTheory;
         clone() {
             return new DirectedGraph(this.vertices.slice(), this.edges.slice());
         }
-        drawEdge(ctx, vertex_radius, from, to) {
+        drawEdge(ctx, vertex_radius, edge_color, from, to) {
             let a = Math.atan2(to.y - from.y, to.x - from.x);
-            let n = { x: Math.cos(a), y: Math.sin(a) };
-            let p = { x: to.x - vertex_radius * n.x, y: to.y - vertex_radius * n.y };
+            let d = { x: Math.cos(a), y: Math.sin(a) };
+            let p = { x: to.x - vertex_radius * d.x, y: to.y - vertex_radius * d.y };
             let b = Math.PI / 1.2;
             let u = { x: Math.cos(a + b), y: Math.sin(a + b) };
             let v = { x: Math.cos(a - b), y: Math.sin(a - b) };
+            super.drawEdge(ctx, vertex_radius, edge_color, from, to);
+            ctx.fillStyle = edge_color;
             ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(p.x, p.y);
-            ctx.stroke();
-            ctx.closePath();
-            ctx.beginPath();
-            ctx.fillStyle = 'black';
             ctx.moveTo(p.x + vertex_radius * u.x, p.y + vertex_radius * u.y);
             ctx.lineTo(p.x, p.y);
             ctx.lineTo(p.x + vertex_radius * v.x, p.y + vertex_radius * v.y);

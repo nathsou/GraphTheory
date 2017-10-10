@@ -390,14 +390,16 @@ namespace GraphTheory {
          */
         protected drawEdge(ctx: CanvasRenderingContext2D,
             vertex_radius: number,
+            edge_color: string,
             from: {x: number, y: number},
             to: {x: number, y: number}
         ) : void {
-
+            ctx.strokeStyle = edge_color;
             ctx.beginPath();
             ctx.moveTo(from.x, from.y);
             ctx.lineTo(to.x, to.y);
             ctx.stroke();
+            ctx.closePath();
         }
 
         /**
@@ -443,7 +445,7 @@ namespace GraphTheory {
             for (let edge of this.getEdges()) {
                 let origin = vertices_coords.get(edge.from),
                     dst = vertices_coords.get(edge.to);
-                this.drawEdge(ctx, options.vertex_radius, origin, dst);
+                this.drawEdge(ctx, options.vertex_radius, options.edge_color, origin, dst);
                 ctx.closePath();
             }
 

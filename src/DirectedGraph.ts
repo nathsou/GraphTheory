@@ -71,26 +71,32 @@ namespace GraphTheory {
         protected drawEdge(
             ctx: CanvasRenderingContext2D,
             vertex_radius: number,
+            edge_color: string,
             from: {x: number, y: number},
             to: {x: number, y: number}
         ) : void {
             
+            //angle between the two vertices
             let a = Math.atan2(to.y - from.y, to.x - from.x);
-            let n = {x: Math.cos(a), y: Math.sin(a)};
-            let p = {x: to.x - vertex_radius * n.x, y: to.y - vertex_radius * n.y};
+            //direction vector
+            let d = {x: Math.cos(a), y: Math.sin(a)};
+            //intersection between the line following the direction vector
+            //and the circle representing the 'to' vertex
+            let p = {x: to.x - vertex_radius * d.x, y: to.y - vertex_radius * d.y};
 
+            //controls the shape of the arrow
             let b = Math.PI / 1.2;
+            //bottom right
             let u = {x: Math.cos(a + b), y: Math.sin(a + b)};
+            //bottom left
             let v = {x: Math.cos(a - b), y: Math.sin(a - b)};
 
-            ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(p.x, p.y);
-            ctx.stroke();
-            ctx.closePath();
+            //draw line
+            super.drawEdge(ctx, vertex_radius, edge_color, from, to);
 
+            //draw triangle
+            ctx.fillStyle = edge_color;
             ctx.beginPath();
-            ctx.fillStyle = 'black';
             ctx.moveTo(p.x + vertex_radius * u.x, p.y + vertex_radius * u.y);
             ctx.lineTo(p.x, p.y);
             ctx.lineTo(p.x + vertex_radius * v.x, p.y + vertex_radius * v.y);
