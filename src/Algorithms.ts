@@ -55,7 +55,7 @@ namespace GraphTheory {
         }
 
         /**
-         * Implementation of Depth First Search (BFS) Tree traversal
+         * Implementation of Depth First Search (dFS) Tree traversal
          * 
          * @static
          * @template T - The type used to represent labels in the graph

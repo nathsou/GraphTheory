@@ -67,7 +67,7 @@ namespace GraphTheory {
          * @type {boolean}
          * @memberOf Graph
          */
-        protected directed: boolean = false;
+        protected directed: boolean;
 
         /**
          * Creates an instance of Graph.
@@ -77,6 +77,8 @@ namespace GraphTheory {
          * @memberOf Graph
          */
         constructor(vertices: T[], edges: T[][] | Edge<T>[]) {
+
+            this.directed = (this instanceof DirectedGraph);
             this.vertices = [];
             this.edges = [];
             this.adjacency_list = new Map<T, T[]>();
@@ -198,6 +200,7 @@ namespace GraphTheory {
             this.edges.push(edge);
             this.adjacency_list.get(edge.from).push(edge.to);
 
+            //update the adjacency list
             if (!this.directed && edge.from !== edge.to) {
                 this.adjacency_list.get(edge.to).push(edge.from);
             }
@@ -220,6 +223,31 @@ namespace GraphTheory {
 
             this.adjacency_list.get(e.from).splice(this.adjacency_list.get(e.from).indexOf(e.to), 1);
             this.edges.splice(idx, 1);
+        }
+
+        /**
+         * Removes all the edges while keeping the vertices
+         * 
+         * @memberOf Graph
+         */
+        public clearEdges() : void {
+            this.edges = [];
+            
+            for (let v of this.vertices) {
+                this.adjacency_list.set(v, []);
+            }
+        }
+
+        /**
+         * Clears the graph
+         * i.e: removes all vertices and edges (empty graph)
+         * 
+         * @memberOf Graph
+         */
+        public clear() : void {
+            this.edges = [];
+            this.vertices = [];
+            this.adjacency_list.clear();
         }
 
         //getters & setters
@@ -425,7 +453,7 @@ namespace GraphTheory {
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, options.vertex_radius, 0, 2 * Math.PI);
                 ctx.fill();
-                ctx.strokeText(v.toString(), p.x - 2, p.y + 3, options.vertex_radius);
+                ctx.strokeText(v.toString(), p.x - 3, p.y + 3, options.vertex_radius);
                 ctx.stroke();
                 ctx.closePath();
             }

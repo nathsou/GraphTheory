@@ -13,11 +13,7 @@ namespace GraphTheory {
      * @template T - Vertex label type
      */
     export class DirectedGraph<T> extends Graph<T> {
-        
-        constructor(vertices: T[], edges: T[][] | Arc<T>[]) {
-            super(vertices, edges);
-            this.directed = true;
-        }
+
         /**
          * @param {Edge<T>} edge 
          * @returns {boolean} - whether an arc is undirected

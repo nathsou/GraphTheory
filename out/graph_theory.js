@@ -6,7 +6,7 @@ var GraphTheory;
     GraphTheory.isEdge = isEdge;
     class Graph {
         constructor(vertices, edges) {
-            this.directed = false;
+            this.directed = (this instanceof GraphTheory.DirectedGraph);
             this.vertices = [];
             this.edges = [];
             this.adjacency_list = new Map();
@@ -85,6 +85,17 @@ var GraphTheory;
             this.adjacency_list.get(e.from).splice(this.adjacency_list.get(e.from).indexOf(e.to), 1);
             this.edges.splice(idx, 1);
         }
+        clearEdges() {
+            this.edges = [];
+            for (let v of this.vertices) {
+                this.adjacency_list.set(v, []);
+            }
+        }
+        clear() {
+            this.edges = [];
+            this.vertices = [];
+            this.adjacency_list.clear();
+        }
         getVertices() {
             return this.vertices;
         }
@@ -156,7 +167,7 @@ var GraphTheory;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, options.vertex_radius, 0, 2 * Math.PI);
                 ctx.fill();
-                ctx.strokeText(v.toString(), p.x - 2, p.y + 3, options.vertex_radius);
+                ctx.strokeText(v.toString(), p.x - 3, p.y + 3, options.vertex_radius);
                 ctx.stroke();
                 ctx.closePath();
             }
@@ -167,10 +178,6 @@ var GraphTheory;
 var GraphTheory;
 (function (GraphTheory) {
     class DirectedGraph extends GraphTheory.Graph {
-        constructor(vertices, edges) {
-            super(vertices, edges);
-            this.directed = true;
-        }
         isArcUndirected(arc) {
             return this.hasEdge(arc) && this.hasEdge({ from: arc.to, to: arc.from });
         }
