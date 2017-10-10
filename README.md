@@ -6,4 +6,4 @@ Create and visualize directed or undirected graphs in the browser : [playground 
 
 ## Documentation
 
-Access the online [documentation](https://nathsou.github.io/GraphTheory/doc/globals.html)
+Access the online [documentation](https://nathsou.github.io/GraphTheory/docs/globals.html)
