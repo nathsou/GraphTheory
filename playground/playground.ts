@@ -86,7 +86,7 @@ import GT = GraphTheory;
 
         public draw() : void {
             this.graph.draw(this.cnv, this.vertices_coords, {
-                vertex_color: 'lightblue',
+                vertex_color: 'lightgreen',
                 vertex_radius: this.vertex_radius,
                 edge_color: 'black',
                 edge_width: 1

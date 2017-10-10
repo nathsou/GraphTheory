@@ -1,7 +1,6 @@
 # Graph Theory
 
-![Example Directed Graph](examples/directed.png)
-![Example Directed Graph](examples/undirected.png)
+![Example Graphs](examples/graphs.png)
 
 Create and visualize directed or undirected graphs in the browser : [playground demo](https://nathsou.github.io/GraphTheory/playground/index.html)
 
