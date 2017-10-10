@@ -4,7 +4,7 @@
         "outFile": "out/graph_theory.js",
         "sourceMap": true,
         "target": "es6",
-        "lib": ["dom","es2017"]
+        "removeComments": true
     },
     "exclude": [
         "node_modules"

@@ -6,6 +6,7 @@ var GraphTheory;
     GraphTheory.isEdge = isEdge;
     class Graph {
         constructor(vertices, edges) {
+            this.directed = false;
             this.vertices = [];
             this.edges = [];
             this.adjacency_list = new Map();
@@ -29,7 +30,7 @@ var GraphTheory;
             }
         }
         getEdge(from, to) {
-            let e = [from, to].sort();
+            let e = this.directed ? [from, to] : [from, to].sort();
             return {
                 from: e[0],
                 to: e[1]
@@ -72,7 +73,7 @@ var GraphTheory;
                 return;
             this.edges.push(edge);
             this.adjacency_list.get(edge.from).push(edge.to);
-            if (edge.from !== edge.to) {
+            if (!this.directed && edge.from !== edge.to) {
                 this.adjacency_list.get(edge.to).push(edge.from);
             }
         }
@@ -84,7 +85,6 @@ var GraphTheory;
             this.adjacency_list.get(e.from).splice(this.adjacency_list.get(e.from).indexOf(e.to), 1);
             this.edges.splice(idx, 1);
         }
-        //getters & setters
         getVertices() {
             return this.vertices;
         }
@@ -100,19 +100,6 @@ var GraphTheory;
         getVertexDegree(v) {
             return this.getAdjacentVertices(v).length;
         }
-        //properties
-        isComplete() {
-            let n = this.vertices.length - 1;
-            for (let v = 0; v < n + 1; v++) {
-                if (this.getVertexDegree(this.vertices[v]) < n) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        isEmpty() {
-            return this.vertices.length === 0;
-        }
         getComplementaryGraph() {
             let edges = [];
             let n = this.vertices.length;
@@ -124,6 +111,24 @@ var GraphTheory;
                 }
             }
             return new Graph(this.vertices.slice(), edges);
+        }
+        isComplete() {
+            let n = this.vertices.length - 1;
+            for (let v = 0; v < n + 1; v++) {
+                if (this.getVertexDegree(this.vertices[v]) < n) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        isDirected() {
+            return this.directed;
+        }
+        isEmpty() {
+            return this.vertices.length === 0;
+        }
+        clone() {
+            return new Graph(this.vertices.slice(), this.edges.slice());
         }
         drawEdge(ctx, vertex_radius, from, to) {
             ctx.beginPath();
@@ -159,31 +164,15 @@ var GraphTheory;
     }
     GraphTheory.Graph = Graph;
 })(GraphTheory || (GraphTheory = {}));
-/// <reference path="Graph.ts" />
 var GraphTheory;
 (function (GraphTheory) {
     class DirectedGraph extends GraphTheory.Graph {
         constructor(vertices, edges) {
             super(vertices, edges);
+            this.directed = true;
         }
-        //order matters
-        getEdge(from, to) {
-            return {
-                from: from,
-                to: to
-            };
-        }
-        //are [from, to] and [to, from] in edges ?
-        isEdgeUndirected(edge) {
-            return this.hasEdge(edge) && this.hasEdge({ from: edge.to, to: edge.from });
-        }
-        addEdge(edge) {
-            if (this.hasEdge(edge))
-                return;
-            this.edges.push(edge);
-            if (!this.hasEdge(edge)) {
-                this.adjacency_list.get(edge.from).push(edge.to);
-            }
+        isArcUndirected(arc) {
+            return this.hasEdge(arc) && this.hasEdge({ from: arc.to, to: arc.from });
         }
         static fromUndirected(graph) {
             let directed = new DirectedGraph(graph.getVertices(), graph.getEdges());
@@ -192,30 +181,32 @@ var GraphTheory;
             }
             return directed;
         }
-        //draw arrows to represent an arc's direction
+        clone() {
+            return new DirectedGraph(this.vertices.slice(), this.edges.slice());
+        }
         drawEdge(ctx, vertex_radius, from, to) {
-            ctx.beginPath();
             let a = Math.atan2(to.y - from.y, to.x - from.x);
             let n = { x: Math.cos(a), y: Math.sin(a) };
             let p = { x: to.x - vertex_radius * n.x, y: to.y - vertex_radius * n.y };
             let b = Math.PI / 1.2;
             let u = { x: Math.cos(a + b), y: Math.sin(a + b) };
             let v = { x: Math.cos(a - b), y: Math.sin(a - b) };
+            ctx.beginPath();
             ctx.moveTo(from.x, from.y);
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
+            ctx.closePath();
             ctx.beginPath();
             ctx.fillStyle = 'black';
             ctx.moveTo(p.x + vertex_radius * u.x, p.y + vertex_radius * u.y);
             ctx.lineTo(p.x, p.y);
             ctx.lineTo(p.x + vertex_radius * v.x, p.y + vertex_radius * v.y);
             ctx.fill();
+            ctx.closePath();
         }
     }
     GraphTheory.DirectedGraph = DirectedGraph;
 })(GraphTheory || (GraphTheory = {}));
-/// <reference path="../src/Graph.ts" />
-/// <reference path="../src/DirectedGraph.ts" />
 var PlayGround;
 (function (PlayGround_1) {
     var GT = GraphTheory;
@@ -287,4 +278,69 @@ var PlayGround;
     }
     PlayGround_1.PlayGround = PlayGround;
 })(PlayGround || (PlayGround = {}));
+var GraphTheory;
+(function (GraphTheory) {
+    let Utils;
+    (function (Utils) {
+        class AbstractList {
+            constructor(...elements) {
+                this.elements = elements;
+            }
+            peek() {
+                return this.elements[this.elements.length - 1];
+            }
+            size() {
+                return this.elements.length;
+            }
+            isEmpty() {
+                return this.size() === 0;
+            }
+        }
+        class Stack extends AbstractList {
+            push(...elems) {
+                this.elements.push(...elems);
+            }
+            pop() {
+                return this.elements.pop();
+            }
+        }
+        Utils.Stack = Stack;
+        class Queue extends AbstractList {
+            enqueue(...elems) {
+                this.elements.unshift(...elems);
+            }
+            dequeue() {
+                return this.elements.pop();
+            }
+        }
+        Utils.Queue = Queue;
+    })(Utils = GraphTheory.Utils || (GraphTheory.Utils = {}));
+})(GraphTheory || (GraphTheory = {}));
+var GraphTheory;
+(function (GraphTheory) {
+    class Algorithms {
+        static breadthFirstSearch(g, initial_vertex, label_ordering) {
+            let visited_nodes = new Map();
+            let queue = new GraphTheory.Utils.Queue(initial_vertex);
+            let order = [];
+            while (!queue.isEmpty()) {
+                let j = queue.dequeue();
+                let adj_nodes = g.getAdjacentVertices(j).sort(label_ordering);
+                for (let i = 0; i < adj_nodes.length; i++) {
+                    let k = adj_nodes[i];
+                    if (!visited_nodes.has(k)) {
+                        visited_nodes.set(k, true);
+                        queue.enqueue(k);
+                    }
+                }
+                visited_nodes.set(j, true);
+                order.push(j);
+            }
+            return order;
+        }
+        static depthFirstSearch(g, initial_vertex, label_ordering) {
+        }
+    }
+    GraphTheory.Algorithms = Algorithms;
+})(GraphTheory || (GraphTheory = {}));
 //# sourceMappingURL=graph_theory.js.map

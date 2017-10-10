@@ -2,36 +2,44 @@
 
 namespace GraphTheory {
 
+    type Arc<T> = Edge<T>
+
+    /**
+     * Directed Graph Data Structure
+     * 
+     * @export
+     * @class DirectedGraph
+     * @extends {Graph<T>}
+     * @template T - Vertex label type
+     */
     export class DirectedGraph<T> extends Graph<T> {
         
-        constructor(vertices: T[], edges: T[][] | Edge<T>[]) {
+        constructor(vertices: T[], edges: T[][] | Arc<T>[]) {
             super(vertices, edges);
             this.directed = true;
         }
-
-        //order matters
-        protected getEdge(from: T, to: T) : Edge<T> { //<=> getArc
-            return {
-                from: from,
-                to: to
-            };
+        /**
+         * @param {Edge<T>} edge 
+         * @returns {boolean} - whether an arc is undirected
+         * i.e: if arcs (from, to) and (to, from) are in the set of edges
+         * 
+         * @memberOf DirectedGraph
+         */
+        public isArcUndirected(arc: Arc<T>) : boolean {
+            return this.hasEdge(arc) && this.hasEdge({from: arc.to, to: arc.from});
         }
 
-        //are [from, to] and [to, from] in edges ?
-        public isEdgeUndirected(edge: Edge<T>) : boolean {
-            return this.hasEdge(edge) && this.hasEdge({from: edge.to, to: edge.from});
-        }
-
-        public addEdge(edge: Edge<T>) : void {
-            if (this.hasEdge(edge)) return;
-
-            this.edges.push(edge);
-
-            if (!this.hasEdge(edge)) {
-                this.adjacency_list.get(edge.from).push(edge.to);
-            }
-        }
-
+        /**
+         * Creates a DirectedGraph from a Graph
+         * (each edge [i, j] forms two arcs (i, j) and (j, i))
+         * 
+         * @static
+         * @template T 
+         * @param {Graph<T>} graph 
+         * @returns {DirectedGraph<T>} 
+         * 
+         * @memberOf DirectedGraph
+         */
         static fromUndirected<T>(graph: Graph<T>) : DirectedGraph<T> {
             let directed = new DirectedGraph<T>(graph.getVertices(), graph.getEdges());
 
@@ -42,7 +50,28 @@ namespace GraphTheory {
             return directed;
         }
 
-        //draw arrows to represent an arc's direction
+        /**
+         * Creates a clone of this directed graph
+         * 
+         * @returns {DirectedGraph<T>} 
+         * 
+         * @memberOf DirectedGraph
+         */
+        public clone() : DirectedGraph<T> {
+            return new DirectedGraph<T>(this.vertices.slice(), this.edges.slice());
+        }
+
+        /**
+         * Draws an arc onto a canvas
+         * 
+         * @protected
+         * @param {CanvasRenderingContext2D} ctx 
+         * @param {number} vertex_radius 
+         * @param {{x: number, y: number}} from 
+         * @param {{x: number, y: number}} to 
+         * 
+         * @memberOf DirectedGraph
+         */
         protected drawEdge(
             ctx: CanvasRenderingContext2D,
             vertex_radius: number,
@@ -50,7 +79,6 @@ namespace GraphTheory {
             to: {x: number, y: number}
         ) : void {
             
-            ctx.beginPath();
             let a = Math.atan2(to.y - from.y, to.x - from.x);
             let n = {x: Math.cos(a), y: Math.sin(a)};
             let p = {x: to.x - vertex_radius * n.x, y: to.y - vertex_radius * n.y};
@@ -59,18 +87,19 @@ namespace GraphTheory {
             let u = {x: Math.cos(a + b), y: Math.sin(a + b)};
             let v = {x: Math.cos(a - b), y: Math.sin(a - b)};
 
+            ctx.beginPath();
             ctx.moveTo(from.x, from.y);
             ctx.lineTo(p.x, p.y);
-
             ctx.stroke();
+            ctx.closePath();
 
             ctx.beginPath();
             ctx.fillStyle = 'black';
             ctx.moveTo(p.x + vertex_radius * u.x, p.y + vertex_radius * u.y);
             ctx.lineTo(p.x, p.y);
             ctx.lineTo(p.x + vertex_radius * v.x, p.y + vertex_radius * v.y);
-
             ctx.fill();
+            ctx.closePath();
         }
 
     }
