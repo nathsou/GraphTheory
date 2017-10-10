@@ -18,13 +18,29 @@ namespace GraphTheory {
      * Checks if a given object implements the Edge<T> interface
      * i.e: if it has 'from' and 'to' properties
      * 
-     * @export
      * @template T - Vertex label type
      * @param {*} obj - JavaScript object to check
      * @returns {obj is Edge<T>} 
      */
-    export function isEdge<T>(obj: any) : obj is Edge<T> {
+    function isEdge<T>(obj: any) : obj is Edge<T> {
         return 'from' in obj && 'to' in obj;
+    }
+
+    /**
+     * JSON representation of a Graph
+     * 
+     * @export
+     * @interface JsonGraph
+     * @template T - Vertex label type
+     */
+    export interface JsonGraph<T> {
+        vertices: T[],
+        edges: Edge<T>[],
+        adjacency_list?: [T, T[]][]
+    }
+
+    function isJsonGraph<T>(obj: any) : obj is JsonGraph<T> {
+        return 'vertices' in obj && 'edges' in obj;
     }
 
     /**
@@ -364,6 +380,51 @@ namespace GraphTheory {
          */
         public isEmpty() : boolean {
             return this.vertices.length === 0;
+        }
+
+        /**
+         * @param {boolean} [include_adjacency_list=false]
+         * @returns {JsonGraph<T>} - JSON representation of the graph
+         * 
+         * @memberOf Graph
+         */
+        public toJSON(include_adjacency_list: boolean = false) : JsonGraph<T> {
+            let graph = {
+                vertices: this.vertices,
+                edges: this.edges
+            };
+
+            if (include_adjacency_list) {
+                graph['adjacency_list'] = [...this.adjacency_list];
+            }
+
+            return graph;
+        }
+
+        protected static checkJsonGraph<T>(json: JsonGraph<T> | string) : JsonGraph<T> {
+            let graph: JsonGraph<T> = typeof json === 'string' ? JSON.parse(json) : json;
+            
+            if (!isJsonGraph(graph)) {
+                throw new Error(`${JSON.stringify(graph)}\ndoesn't implement JsonGraph interface.`);
+            }
+
+            return graph;
+        }
+
+        /**
+         * Converts a JSON reprensation of a graph into a Graph
+         * 
+         * @static
+         * @template T 
+         * @param {JsonGraph<T>} json 
+         * @returns {Graph<T>} 
+         * 
+         * @memberOf Graph
+         */
+        public static fromJSON<T>(json: JsonGraph<T> | string) : Graph<T> {
+            let graph = Graph.checkJsonGraph(json);
+
+            return new Graph<T>(graph.vertices, graph.edges);
         }
 
         /**

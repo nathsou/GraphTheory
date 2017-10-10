@@ -36,7 +36,7 @@ namespace GraphTheory {
          * 
          * @memberOf DirectedGraph
          */
-        static fromUndirected<T>(graph: Graph<T>) : DirectedGraph<T> {
+        public static fromUndirected<T>(graph: Graph<T>) : DirectedGraph<T> {
             let directed = new DirectedGraph<T>(graph.getVertices(), graph.getEdges());
 
             for (let edge of graph.getEdges()) {
@@ -44,6 +44,22 @@ namespace GraphTheory {
             }
 
             return directed;
+        }
+
+        /**
+         * Converts a JSON reprensation of a graph into a DirectedGraph
+         * 
+         * @static
+         * @template T 
+         * @param {JsonGraph<T>} json 
+         * @returns {Graph<T>} 
+         * 
+         * @memberOf DirectedGraph
+         */
+        public static fromJSON<T>(json: JsonGraph<T>) : Graph<T> {
+            let graph = Graph.checkJsonGraph(json);
+            
+            return new DirectedGraph<T>(json.vertices, json.edges);
         }
 
         /**

@@ -3,7 +3,9 @@ var GraphTheory;
     function isEdge(obj) {
         return 'from' in obj && 'to' in obj;
     }
-    GraphTheory.isEdge = isEdge;
+    function isJsonGraph(obj) {
+        return 'vertices' in obj && 'edges' in obj;
+    }
     class Graph {
         constructor(vertices, edges) {
             this.directed = (this instanceof GraphTheory.DirectedGraph);
@@ -138,6 +140,27 @@ var GraphTheory;
         isEmpty() {
             return this.vertices.length === 0;
         }
+        toJSON(include_adjacency_list = false) {
+            let graph = {
+                vertices: this.vertices,
+                edges: this.edges
+            };
+            if (include_adjacency_list) {
+                graph['adjacency_list'] = [...this.adjacency_list];
+            }
+            return graph;
+        }
+        static checkJsonGraph(json) {
+            let graph = typeof json === 'string' ? JSON.parse(json) : json;
+            if (!isJsonGraph(graph)) {
+                throw new Error(`${JSON.stringify(graph)}\ndoesn't implement JsonGraph interface.`);
+            }
+            return graph;
+        }
+        static fromJSON(json) {
+            let graph = Graph.checkJsonGraph(json);
+            return new Graph(graph.vertices, graph.edges);
+        }
         clone() {
             return new Graph(this.vertices.slice(), this.edges.slice());
         }
@@ -189,6 +212,10 @@ var GraphTheory;
                 directed.addEdge({ from: edge.to, to: edge.from, cost: edge.cost });
             }
             return directed;
+        }
+        static fromJSON(json) {
+            let graph = GraphTheory.Graph.checkJsonGraph(json);
+            return new DirectedGraph(json.vertices, json.edges);
         }
         clone() {
             return new DirectedGraph(this.vertices.slice(), this.edges.slice());
@@ -323,8 +350,9 @@ var GraphTheory;
 })(GraphTheory || (GraphTheory = {}));
 var GraphTheory;
 (function (GraphTheory) {
-    class Algorithms {
-        static breadthFirstSearch(g, initial_vertex, label_ordering) {
+    let Algorithms;
+    (function (Algorithms) {
+        function breadthFirstSearch(g, initial_vertex, label_ordering) {
             let visited_nodes = new Map();
             let queue = new GraphTheory.Utils.Queue(initial_vertex);
             let order = [];
@@ -343,9 +371,25 @@ var GraphTheory;
             }
             return order;
         }
-        static depthFirstSearch(g, initial_vertex, label_ordering) {
+        Algorithms.breadthFirstSearch = breadthFirstSearch;
+        function depthFirstSearch(g, initial_vertex, label_ordering) {
+            let visited_nodes = new Map();
+            let stack = new GraphTheory.Utils.Stack(initial_vertex);
+            let order = [];
+            while (!stack.isEmpty()) {
+                let v = stack.pop();
+                let adj_nodes = g.getAdjacentVertices(v).sort(label_ordering);
+                if (!visited_nodes.has(v)) {
+                    visited_nodes.set(v, true);
+                    order.push(v);
+                    for (let w of adj_nodes) {
+                        stack.push(w);
+                    }
+                }
+            }
+            return order;
         }
-    }
-    GraphTheory.Algorithms = Algorithms;
+        Algorithms.depthFirstSearch = depthFirstSearch;
+    })(Algorithms = GraphTheory.Algorithms || (GraphTheory.Algorithms = {}));
 })(GraphTheory || (GraphTheory = {}));
 //# sourceMappingURL=graph_theory.js.map

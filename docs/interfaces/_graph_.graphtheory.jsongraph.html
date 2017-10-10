@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>GraphTheory | </title>
+	<title>JsonGraph | </title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -56,47 +56,99 @@
 					<a href="../index.html">Globals</a>
 				</li>
 				<li>
-					<a href="_directedgraph_.html">&quot;DirectedGraph&quot;</a>
+					<a href="../modules/_graph_.html">&quot;Graph&quot;</a>
 				</li>
 				<li>
-					<a href="_directedgraph_.graphtheory.html">GraphTheory</a>
+					<a href="../modules/_graph_.graphtheory.html">GraphTheory</a>
+				</li>
+				<li>
+					<a href="_graph_.graphtheory.jsongraph.html">JsonGraph</a>
 				</li>
 			</ul>
-			<h1>Module GraphTheory</h1>
+			<h1>Interface JsonGraph&lt;T&gt;</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>JSON representation of a Graph</p>
+					</div>
+					<dl class="tsd-comment-tags">
+						<dt>export</dt>
+						<dd></dd>
+						<dt>interface</dt>
+						<dd><p>JsonGraph</p>
+						</dd>
+						<dt>template</dt>
+						<dd><p>T - Vertex label type</p>
+						</dd>
+					</dl>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-type-parameters">
+				<h3>Type parameters</h3>
+				<ul class="tsd-type-parameters">
+					<li>
+						<h4>T</h4>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">JsonGraph</span>
+					</li>
+				</ul>
+			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Classes</h3>
+							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter"><a href="../classes/_directedgraph_.graphtheory.directedgraph.html" class="tsd-kind-icon">Directed<wbr>Graph</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section tsd-is-not-exported">
-							<h3>Type aliases</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-type-alias tsd-parent-kind-module tsd-is-not-exported"><a href="_directedgraph_.graphtheory.html#arc" class="tsd-kind-icon">Arc</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_graph_.graphtheory.jsongraph.html#adjacency_list" class="tsd-kind-icon">adjacency_<wbr>list</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_graph_.graphtheory.jsongraph.html#edges" class="tsd-kind-icon">edges</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_graph_.graphtheory.jsongraph.html#vertices" class="tsd-kind-icon">vertices</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
-			<section class="tsd-panel-group tsd-member-group tsd-is-not-exported">
-				<h2>Type aliases</h2>
-				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module tsd-is-not-exported">
-					<a name="arc" class="tsd-anchor"></a>
-					<h3>Arc</h3>
-					<div class="tsd-signature tsd-kind-icon">Arc<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_graph_.graphtheory.edge.html" class="tsd-signature-type">Edge</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></div>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="adjacency_list" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> adjacency_<wbr>list</h3>
+					<div class="tsd-signature tsd-kind-icon">adjacency_<wbr>list<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/nathsou/GraphTheory/blob/5d6551d/src/DirectedGraph.ts#L5">DirectedGraph.ts:5</a></li>
+							<li>Defined in <a href="https://github.com/nathsou/GraphTheory/blob/5d6551d/src/Graph.ts#L39">Graph.ts:39</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="edges" class="tsd-anchor"></a>
+					<h3>edges</h3>
+					<div class="tsd-signature tsd-kind-icon">edges<span class="tsd-signature-symbol">:</span> <a href="_graph_.graphtheory.edge.html" class="tsd-signature-type">Edge</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/nathsou/GraphTheory/blob/5d6551d/src/Graph.ts#L38">Graph.ts:38</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="vertices" class="tsd-anchor"></a>
+					<h3>vertices</h3>
+					<div class="tsd-signature tsd-kind-icon">vertices<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/nathsou/GraphTheory/blob/5d6551d/src/Graph.ts#L37">Graph.ts:37</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -113,10 +165,34 @@
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 					<li class=" tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter">
-						<a href="../classes/_directedgraph_.graphtheory.directedgraph.html" class="tsd-kind-icon">Directed<wbr>Graph</a>
+						<a href="../classes/_graph_.graphtheory.graph.html" class="tsd-kind-icon">Graph</a>
 					</li>
-					<li class=" tsd-kind-type-alias tsd-parent-kind-module tsd-is-not-exported">
-						<a href="_directedgraph_.graphtheory.html#arc" class="tsd-kind-icon">Arc</a>
+					<li class=" tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="_graph_.graphtheory.edge.html" class="tsd-kind-icon">Edge</a>
+					</li>
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="_graph_.graphtheory.jsongraph.html" class="tsd-kind-icon">Json<wbr>Graph</a>
+						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_graph_.graphtheory.jsongraph.html#adjacency_list" class="tsd-kind-icon">adjacency_<wbr>list</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_graph_.graphtheory.jsongraph.html#edges" class="tsd-kind-icon">edges</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_graph_.graphtheory.jsongraph.html#vertices" class="tsd-kind-icon">vertices</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter tsd-is-not-exported">
+						<a href="../modules/_graph_.graphtheory.html#isedge" class="tsd-kind-icon">is<wbr>Edge</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter tsd-is-not-exported">
+						<a href="../modules/_graph_.graphtheory.html#isjsongraph" class="tsd-kind-icon">is<wbr>Json<wbr>Graph</a>
 					</li>
 				</ul>
 			</nav>
