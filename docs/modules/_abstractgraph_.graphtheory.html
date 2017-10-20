@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Utils | </title>
+	<title>GraphTheory | </title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -56,16 +56,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="_utils_.html">&quot;Utils&quot;</a>
+					<a href="_abstractgraph_.html">&quot;AbstractGraph&quot;</a>
 				</li>
 				<li>
-					<a href="_utils_.graphtheory.html">GraphTheory</a>
-				</li>
-				<li>
-					<a href="_utils_.graphtheory.utils.html">Utils</a>
+					<a href="_abstractgraph_.graphtheory.html">GraphTheory</a>
 				</li>
 			</ul>
-			<h1>Module Utils</h1>
+			<h1>Module GraphTheory</h1>
 		</div>
 	</div>
 </header>
@@ -79,12 +76,114 @@
 						<section class="tsd-index-section ">
 							<h3>Classes</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter tsd-is-not-exported"><a href="../classes/_utils_.graphtheory.utils.abstractlist.html" class="tsd-kind-icon">Abstract<wbr>List</a></li>
-								<li class="tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter"><a href="../classes/_utils_.graphtheory.utils.queue.html" class="tsd-kind-icon">Queue</a></li>
-								<li class="tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter"><a href="../classes/_utils_.graphtheory.utils.stack.html" class="tsd-kind-icon">Stack</a></li>
+								<li class="tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter"><a href="../classes/_abstractgraph_.graphtheory.abstractgraph.html" class="tsd-kind-icon">Abstract<wbr>Graph</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Interfaces</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter"><a href="../interfaces/_abstractgraph_.graphtheory.edge.html" class="tsd-kind-icon">Edge</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter"><a href="../interfaces/_abstractgraph_.graphtheory.jsongraph.html" class="tsd-kind-icon">Json<wbr>Graph</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Functions</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter"><a href="_abstractgraph_.graphtheory.html#isedge" class="tsd-kind-icon">is<wbr>Edge</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter"><a href="_abstractgraph_.graphtheory.html#isjsongraph" class="tsd-kind-icon">is<wbr>Json<wbr>Graph</a></li>
 							</ul>
 						</section>
 					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Functions</h2>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+					<a name="isedge" class="tsd-anchor"></a>
+					<h3>is<wbr>Edge</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Edge&lt;T&gt;<span class="tsd-signature-symbol">(</span>obj<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in AbstractGraph.ts:26</li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Checks if a given object implements the Edge<T> interface
+									i.e: if it has &#39;from&#39; and &#39;to&#39; properties</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>export</dt>
+									<dd></dd>
+									<dt>template</dt>
+									<dd><p>T - Vertex label type</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T</h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>obj: <span class="tsd-signature-type">any</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>JavaScript object to check</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+					<a name="isjsongraph" class="tsd-anchor"></a>
+					<h3>is<wbr>Json<wbr>Graph</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Json<wbr>Graph&lt;T&gt;<span class="tsd-signature-symbol">(</span>obj<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in AbstractGraph.ts:52</li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Checks if a given object implements the JsonGraph<T> interface
+									i.e: if it has &#39;vertices&#39; and &#39;edges&#39; properties</p>
+								</div>
+								<dl class="tsd-comment-tags">
+									<dt>export</dt>
+									<dd></dd>
+									<dt>template</dt>
+									<dd><p>T</p>
+									</dd>
+								</dl>
+							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T</h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>obj: <span class="tsd-signature-type">any</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
 				</section>
 			</section>
 		</div>
@@ -98,14 +197,20 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter tsd-is-not-exported">
-						<a href="../classes/_utils_.graphtheory.utils.abstractlist.html" class="tsd-kind-icon">Abstract<wbr>List</a>
-					</li>
 					<li class=" tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter">
-						<a href="../classes/_utils_.graphtheory.utils.queue.html" class="tsd-kind-icon">Queue</a>
+						<a href="../classes/_abstractgraph_.graphtheory.abstractgraph.html" class="tsd-kind-icon">Abstract<wbr>Graph</a>
 					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-module tsd-has-type-parameter">
-						<a href="../classes/_utils_.graphtheory.utils.stack.html" class="tsd-kind-icon">Stack</a>
+					<li class=" tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="../interfaces/_abstractgraph_.graphtheory.edge.html" class="tsd-kind-icon">Edge</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="../interfaces/_abstractgraph_.graphtheory.jsongraph.html" class="tsd-kind-icon">Json<wbr>Graph</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="_abstractgraph_.graphtheory.html#isedge" class="tsd-kind-icon">is<wbr>Edge</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="_abstractgraph_.graphtheory.html#isjsongraph" class="tsd-kind-icon">is<wbr>Json<wbr>Graph</a>
 					</li>
 				</ul>
 			</nav>

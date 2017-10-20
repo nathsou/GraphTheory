@@ -2,6 +2,7 @@
 
 namespace GraphTheory {
 
+    //Arcs in a DirectedGraph are represented by edges
     type Arc<T> = Edge<T>
 
     /**
@@ -12,7 +13,18 @@ namespace GraphTheory {
      * @extends {Graph<T>}
      * @template T - Vertex label type
      */
-    export class DirectedGraph<T> extends Graph<T> {
+    export class DirectedGraph<T> extends AbstractGraph<T> {
+
+        /**
+         * Creates an instance of DirectedGraph.
+         * @param {T[]} vertices 
+         * @param {(T[][] | Edge<T>[])} edges 
+         * 
+         * @memberOf Graph
+         */
+        constructor(vertices: T[], edges: T[][] | Edge<T>[]) {
+            super(vertices, edges, true);
+        }
 
         /**
          * @param {Edge<T>} edge 
@@ -56,7 +68,7 @@ namespace GraphTheory {
          * 
          * @memberOf DirectedGraph
          */
-        public static fromJSON<T>(json: JsonGraph<T>) : Graph<T> {
+        public static fromJSON<T>(json: JsonGraph<T>) : DirectedGraph<T> {
             let graph = Graph.checkJsonGraph(json);
             
             return new DirectedGraph<T>(json.vertices, json.edges);

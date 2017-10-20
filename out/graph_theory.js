@@ -3,12 +3,14 @@ var GraphTheory;
     function isEdge(obj) {
         return 'from' in obj && 'to' in obj;
     }
+    GraphTheory.isEdge = isEdge;
     function isJsonGraph(obj) {
         return 'vertices' in obj && 'edges' in obj;
     }
-    class Graph {
-        constructor(vertices, edges) {
-            this.directed = (this instanceof GraphTheory.DirectedGraph);
+    GraphTheory.isJsonGraph = isJsonGraph;
+    class AbstractGraph {
+        constructor(vertices, edges, directed = false) {
+            this.directed = directed;
             this.vertices = [];
             this.edges = [];
             this.adjacency_list = new Map();
@@ -31,33 +33,21 @@ var GraphTheory;
                 this.addEdge(edge);
             }
         }
-        getEdge(from, to) {
+        hasVertex(v) {
+            return this.adjacency_list.has(v);
+        }
+        toEdge(from, to) {
             let e = this.directed ? [from, to] : [from, to].sort();
             return {
                 from: e[0],
                 to: e[1]
             };
         }
-        getEdgeIndex(edge) {
-            if (!this.hasEdge(edge)) {
-                return -1;
-            }
-            let e = this.getEdge(edge.from, edge.to);
-            for (let i = 0; i < this.edges.length; i++) {
-                if (this.edges[i].from === e.from && this.edges[i].to === e.to) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-        hasVertex(v) {
-            return this.adjacency_list.has(v);
-        }
         hasEdge(edge) {
             if (!this.hasVertex(edge.from) || !this.hasVertex(edge.to)) {
                 return false;
             }
-            let e = this.getEdge(edge.from, edge.to);
+            let e = this.toEdge(edge.from, edge.to);
             return this.getAdjacentVertices(e.from).indexOf(e.to) !== -1;
         }
         addVertex(v) {
@@ -79,11 +69,22 @@ var GraphTheory;
                 this.adjacency_list.get(edge.to).push(edge.from);
             }
         }
+        getEdgeIndex(edge) {
+            if (this.hasEdge(edge)) {
+                let e = this.toEdge(edge.from, edge.to);
+                for (let i = 0; i < this.edges.length; i++) {
+                    if (this.edges[i].from === e.from && this.edges[i].to === e.to) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
         removeEdge(edge) {
             let idx = this.getEdgeIndex(edge);
             if (idx === -1)
                 return;
-            let e = this.getEdge(edge.from, edge.to);
+            let e = this.toEdge(edge.from, edge.to);
             this.adjacency_list.get(e.from).splice(this.adjacency_list.get(e.from).indexOf(e.to), 1);
             this.edges.splice(idx, 1);
         }
@@ -101,8 +102,14 @@ var GraphTheory;
         getVertices() {
             return this.vertices;
         }
+        getVertex(i) {
+            return this.vertices[i];
+        }
         getEdges() {
             return this.edges;
+        }
+        getEdge(i) {
+            return this.edges[i];
         }
         getAdjacencyList() {
             return this.adjacency_list;
@@ -113,34 +120,13 @@ var GraphTheory;
         getVertexDegree(v) {
             return this.getAdjacentVertices(v).length;
         }
-        getComplementaryGraph() {
-            let edges = [];
-            let n = this.vertices.length;
-            for (let i = 0; i < n; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (i !== j && !this.hasEdge({ from: this.vertices[i], to: this.vertices[j] })) {
-                        edges.push([this.vertices[i], this.vertices[j]]);
-                    }
-                }
-            }
-            return new Graph(this.vertices.slice(), edges);
-        }
-        isComplete() {
-            let n = this.vertices.length - 1;
-            for (let v = 0; v < n + 1; v++) {
-                if (this.getVertexDegree(this.vertices[v]) < n) {
-                    return false;
-                }
-            }
-            return true;
-        }
         isDirected() {
             return this.directed;
         }
         isEmpty() {
             return this.vertices.length === 0;
         }
-        toJSON(include_adjacency_list = false) {
+        toJsonGraph(include_adjacency_list = false) {
             let graph = {
                 vertices: this.vertices,
                 edges: this.edges
@@ -150,6 +136,9 @@ var GraphTheory;
             }
             return graph;
         }
+        toJSON(include_adjacency_list = false) {
+            return JSON.stringify(this.toJsonGraph(include_adjacency_list));
+        }
         static checkJsonGraph(json) {
             let graph = typeof json === 'string' ? JSON.parse(json) : json;
             if (!isJsonGraph(graph)) {
@@ -158,12 +147,9 @@ var GraphTheory;
             return graph;
         }
         static fromJSON(json) {
-            let graph = Graph.checkJsonGraph(json);
-            return new Graph(graph.vertices, graph.edges);
+            return null;
         }
-        clone() {
-            return new Graph(this.vertices.slice(), this.edges.slice());
-        }
+        ;
         drawEdge(ctx, vertex_radius, edge_color, from, to) {
             ctx.strokeStyle = edge_color;
             ctx.beginPath();
@@ -198,11 +184,30 @@ var GraphTheory;
             }
         }
     }
+    GraphTheory.AbstractGraph = AbstractGraph;
+})(GraphTheory || (GraphTheory = {}));
+var GraphTheory;
+(function (GraphTheory) {
+    class Graph extends GraphTheory.AbstractGraph {
+        constructor(vertices, edges) {
+            super(vertices, edges);
+        }
+        clone() {
+            return new Graph(this.vertices.slice(), this.edges.slice());
+        }
+        static fromJSON(json) {
+            let graph = Graph.checkJsonGraph(json);
+            return new Graph(graph.vertices, graph.edges);
+        }
+    }
     GraphTheory.Graph = Graph;
 })(GraphTheory || (GraphTheory = {}));
 var GraphTheory;
 (function (GraphTheory) {
-    class DirectedGraph extends GraphTheory.Graph {
+    class DirectedGraph extends GraphTheory.AbstractGraph {
+        constructor(vertices, edges) {
+            super(vertices, edges, true);
+        }
         isArcUndirected(arc) {
             return this.hasEdge(arc) && this.hasEdge({ from: arc.to, to: arc.from });
         }
@@ -352,6 +357,23 @@ var GraphTheory;
 (function (GraphTheory) {
     let Algorithms;
     (function (Algorithms) {
+        let CONNECTED_COMPONENT_METHOD;
+        (function (CONNECTED_COMPONENT_METHOD) {
+            CONNECTED_COMPONENT_METHOD[CONNECTED_COMPONENT_METHOD["BREADH_FIRST_SEARCH"] = 0] = "BREADH_FIRST_SEARCH";
+            CONNECTED_COMPONENT_METHOD[CONNECTED_COMPONENT_METHOD["DEPTH_FIRST_SEARCH_ITERATIVE"] = 1] = "DEPTH_FIRST_SEARCH_ITERATIVE";
+            CONNECTED_COMPONENT_METHOD[CONNECTED_COMPONENT_METHOD["DEPTH_FIRST_SEARCH_RECURSIVE"] = 2] = "DEPTH_FIRST_SEARCH_RECURSIVE";
+        })(CONNECTED_COMPONENT_METHOD = Algorithms.CONNECTED_COMPONENT_METHOD || (Algorithms.CONNECTED_COMPONENT_METHOD = {}));
+        function getConnectedComponent(g, initial_vertex, label_ordering, method = CONNECTED_COMPONENT_METHOD.BREADH_FIRST_SEARCH) {
+            switch (method) {
+                case CONNECTED_COMPONENT_METHOD.BREADH_FIRST_SEARCH:
+                    return breadthFirstSearch(g, initial_vertex, label_ordering);
+                case CONNECTED_COMPONENT_METHOD.DEPTH_FIRST_SEARCH_ITERATIVE:
+                    return iterativeDepthFirstSearch(g, initial_vertex, label_ordering);
+                default:
+                    return recursiveDepthFirstSearch(g, initial_vertex, label_ordering);
+            }
+        }
+        Algorithms.getConnectedComponent = getConnectedComponent;
         function breadthFirstSearch(g, initial_vertex, label_ordering) {
             let visited_nodes = new Map();
             let queue = new GraphTheory.Utils.Queue(initial_vertex);
@@ -372,7 +394,19 @@ var GraphTheory;
             return order;
         }
         Algorithms.breadthFirstSearch = breadthFirstSearch;
-        function depthFirstSearch(g, initial_vertex, label_ordering) {
+        let DFS_METHOD;
+        (function (DFS_METHOD) {
+            DFS_METHOD[DFS_METHOD["ITERATIVE"] = 0] = "ITERATIVE";
+            DFS_METHOD[DFS_METHOD["RECURSIVE"] = 1] = "RECURSIVE";
+        })(DFS_METHOD = Algorithms.DFS_METHOD || (Algorithms.DFS_METHOD = {}));
+        function depthFirstSearch(g, initial_vertex, label_ordering, method = DFS_METHOD.ITERATIVE) {
+            if (method === DFS_METHOD.ITERATIVE) {
+                return iterativeDepthFirstSearch(g, initial_vertex, label_ordering);
+            }
+            return recursiveDepthFirstSearch(g, initial_vertex, label_ordering);
+        }
+        Algorithms.depthFirstSearch = depthFirstSearch;
+        function iterativeDepthFirstSearch(g, initial_vertex, label_ordering) {
             let visited_nodes = new Map();
             let stack = new GraphTheory.Utils.Stack(initial_vertex);
             let order = [];
@@ -389,7 +423,100 @@ var GraphTheory;
             }
             return order;
         }
-        Algorithms.depthFirstSearch = depthFirstSearch;
+        function recursiveDepthFirstSearch(g, initial_vertex, label_ordering) {
+            let visited_nodes = new Map();
+            let order = [];
+            let DFS = (g, v) => {
+                visited_nodes.set(v, true);
+                order.push(v);
+                let adj_nodes = g.getAdjacentVertices(v).sort(label_ordering);
+                for (let w of adj_nodes) {
+                    if (!visited_nodes.has(w)) {
+                        DFS(g, w);
+                    }
+                }
+            };
+            DFS(g, initial_vertex);
+            return order;
+        }
+        let MINIMUM_SPANNING_TREE_METHOD;
+        (function (MINIMUM_SPANNING_TREE_METHOD) {
+            MINIMUM_SPANNING_TREE_METHOD[MINIMUM_SPANNING_TREE_METHOD["PRIM"] = 0] = "PRIM";
+        })(MINIMUM_SPANNING_TREE_METHOD = Algorithms.MINIMUM_SPANNING_TREE_METHOD || (Algorithms.MINIMUM_SPANNING_TREE_METHOD = {}));
+        function getMinimumSpanningTree(g, initial_vertex, method = MINIMUM_SPANNING_TREE_METHOD.PRIM) {
+            let vertices = [];
+        }
+        Algorithms.getMinimumSpanningTree = getMinimumSpanningTree;
+        function getComplementaryGraph(g) {
+            let edges = [];
+            let n = g.getVertices().length;
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (i !== j && !g.hasEdge({ from: g.getVertex(i), to: g.getVertex(j) })) {
+                        edges.push([g.getVertex(i), g.getVertex(j)]);
+                    }
+                }
+            }
+            if (g.isDirected()) {
+                return new GraphTheory.DirectedGraph(g.getVertices().slice(), edges);
+            }
+            else {
+                return new GraphTheory.Graph(g.getVertices().slice(), edges);
+            }
+        }
+        Algorithms.getComplementaryGraph = getComplementaryGraph;
+        function isComplete(g) {
+            let n = g.getVertices().length - 1;
+            for (let v = 0; v < n + 1; v++) {
+                if (g.getVertexDegree(g.getVertex(v)) < n) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        Algorithms.isComplete = isComplete;
+        let SHORTEST_PATH_METHOD;
+        (function (SHORTEST_PATH_METHOD) {
+            SHORTEST_PATH_METHOD[SHORTEST_PATH_METHOD["DIJKSTRA"] = 0] = "DIJKSTRA";
+            SHORTEST_PATH_METHOD[SHORTEST_PATH_METHOD["BELLMAN_FORD"] = 1] = "BELLMAN_FORD";
+            SHORTEST_PATH_METHOD[SHORTEST_PATH_METHOD["AUTO"] = 2] = "AUTO";
+        })(SHORTEST_PATH_METHOD = Algorithms.SHORTEST_PATH_METHOD || (Algorithms.SHORTEST_PATH_METHOD = {}));
+        function getShortestPath(g, initial_vertex, method = SHORTEST_PATH_METHOD.AUTO) {
+        }
+        Algorithms.getShortestPath = getShortestPath;
+        function dijkstra(g, initial_vertex) {
+            let dist_map = new Map();
+            for (let v of g.getVertices()) {
+                dist_map.set(v, Infinity);
+            }
+            dist_map.set(initial_vertex, 0);
+            let Q = g.getVertices().slice;
+            while (Q.length !== 0) {
+                let min = Infinity, vertex = -1;
+                for (let i = 0; i < Q.length; i++) {
+                    if (dist_map.get(g.getVertex(i)) < min) {
+                        min = dist_map.get(g.getVertex(i));
+                        vertex;
+                    }
+                }
+            }
+        }
     })(Algorithms = GraphTheory.Algorithms || (GraphTheory.Algorithms = {}));
+})(GraphTheory || (GraphTheory = {}));
+var GraphTheory;
+(function (GraphTheory) {
+    class AbstractTree extends GraphTheory.AbstractGraph {
+        constructor() {
+            super([], []);
+        }
+        addEdge(edge) {
+            super.addVertex(edge.from);
+            super.addVertex(edge.to);
+        }
+        addVertex(v) {
+            throw new Error(`Cannot add an unconnected vertex to a Tree, call addEdge() instead, 
+                it will create the necessary vertices`);
+        }
+    }
 })(GraphTheory || (GraphTheory = {}));
 //# sourceMappingURL=graph_theory.js.map
