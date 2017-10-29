@@ -1,5 +1,8 @@
+/// <reference path="../src/Utils.ts" />
 
 namespace GraphTheory {
+
+    import Vec2 = GraphTheory.Utils.Vec2;
 
     /**
      * Represents an edge in undirected graphs and arcs in directed graphs
@@ -104,12 +107,12 @@ namespace GraphTheory {
 
                 if (isEdge<T>(edges[e])) {
                     edge = edges[e] as Edge<T>;
-                    edge['cost'] = edge['cost'];
+                    edge['cost'] = edge['cost'] !== undefined ? edge['cost'] : 1;
                 } else {
                     edge = {
                         from: edges[e][0],
                         to: edges[e][1],
-                        cost: edges[e][2]
+                        cost: edges[e][2] !== undefined ? edges[e][2] : 1
                     };
                 }
 
@@ -164,6 +167,26 @@ namespace GraphTheory {
             return this.getAdjacentVertices(e.from).indexOf(e.to) !== -1;  
         }
 
+        /**
+         * 
+         * @param {Edge<T>} edge 
+         * @returns {boolean} - whether the graph has the opposite edge {from: edge.to, to: edge.from}
+         * 
+         * @memberOf AbstractGraph
+         */
+        public hasOppositeEdge(edge: Edge<T>) : boolean {
+            return this.hasEdge({from: edge.to, to: edge.from}); 
+        }
+
+        /**
+         * 
+         * @returns {boolean} - whether the graph has at least one edge with a negative cost
+         * 
+         * @memberOf AbstractGraph
+         */
+        public hasNegativeCosts() : boolean {
+            return this.edges.some((edge: Edge<T>) => edge.cost < 0);
+        }
 
          /**
          * Adds a vertex to the graph
@@ -202,6 +225,8 @@ namespace GraphTheory {
         public addEdge(edge: Edge<T>) : void {
             if (this.hasEdge(edge)) return;
 
+            if (edge['cost'] === undefined) edge['cost'] = 1;
+
             this.edges.push(edge);
             this.adjacency_list.get(edge.from).push(edge.to);
 
@@ -213,13 +238,12 @@ namespace GraphTheory {
 
         /**
          * 
-         * @protected
          * @param {Edge<T>} edge 
          * @returns {number} - the index of the given edge in the edges array, -1 if it doesn't exist
          * 
          * @memberOf AbstractGraph
          */
-        protected getEdgeIndex(edge: Edge<T>) : number {
+        public getEdgeIndex(edge: Edge<T>) : number {
             
             //first check that this edge exists
             if (this.hasEdge(edge)) {
@@ -319,6 +343,21 @@ namespace GraphTheory {
          */
         public getEdge(i: number) : Edge<T> {
             return this.edges[i];
+        }
+
+        /**
+         * 
+         * @param {T} u 
+         * @param {T} v 
+         * @returns {number} - the cost from edge u to v
+         * 
+         * @memberOf AbstractGraph
+         */
+        public getCost(u: T, v: T) : number {
+            return this.getEdge(this.getEdgeIndex({
+                from: u,
+                to: v
+            })).cost;
         }
 
         /**
@@ -460,11 +499,13 @@ namespace GraphTheory {
          * @param {HTMLCanvasElement} cnv 
          * @param {Map<T, {x: number, y: number}>} vertices_coords 
          * @param {{
+         *                 show_costs: boolean,
          *                 vertex_radius: number,
          *                 vertex_color: string,
          *                 edge_width: number,
          *                 edge_color: string
          *             }} [options={
+         *                 show_costs: false,
          *                 vertex_radius: 10,
          *                 vertex_color: 'lightblue',
          *                 edge_width: 1,
@@ -475,13 +516,15 @@ namespace GraphTheory {
          */
         public draw(
             cnv: HTMLCanvasElement,
-            vertices_coords: Map<T, {x: number, y: number}>,
+            vertices_coords: Map<T, Vec2>,
             options: {
+                show_costs: boolean,
                 vertex_radius: number,
                 vertex_color: string,
                 edge_width: number,
                 edge_color: string
             } = {
+                show_costs: false,
                 vertex_radius: 10,
                 vertex_color: 'lightblue',
                 edge_width: 1,
@@ -494,21 +537,54 @@ namespace GraphTheory {
             ctx.strokeStyle = options.edge_color;
             ctx.lineWidth = options.edge_width;
 
+            //draw edges
             for (let edge of this.getEdges()) {
                 let origin = vertices_coords.get(edge.from),
                     dst = vertices_coords.get(edge.to);
                 this.drawEdge(ctx, options.vertex_radius, options.edge_color, origin, dst);
                 ctx.closePath();
+
+                if (options.show_costs) {
+
+                    //get a normal vector of the line directed by the edge
+                    let n = origin.dirTo(dst).normalVector();
+                    let sgn = Math.sign;
+                    let text_pos = origin.add(dst.sub(origin).div(2));
+
+                    /* show normal vector
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'black';
+                    ctx.moveTo(text_pos.x, text_pos.y);
+                    let tp = text_pos.sub(n.times(50));
+                    ctx.lineTo(tp.x, tp.y);
+                    ctx.stroke();
+                    ctx.closePath();
+                    */
+
+                    text_pos = text_pos.add(n.mul(10));
+
+                    ctx.beginPath();
+                    //ctx.font = '21px'
+                    ctx.textAlign = 'center';
+                    ctx.strokeText(edge.cost.toString(), text_pos.x, text_pos.y);
+                    ctx.stroke();
+                    ctx.closePath();
+                }
             }
-
-            ctx.fillStyle = options.vertex_color;
-
+            //draw vertices
             for (let [v, p] of vertices_coords) {
                 ctx.beginPath();
+                ctx.fillStyle = options.vertex_color;
                 ctx.arc(p.x, p.y, options.vertex_radius, 0, 2 * Math.PI);
                 ctx.fill();
-                ctx.strokeText(v.toString(), p.x - 3, p.y + 3, options.vertex_radius);
                 ctx.stroke();
+                ctx.closePath();
+
+                ctx.beginPath();
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'black';
+                ctx.fillText(v.toString(), p.x, p.y + 3, options.vertex_radius);
+                ctx.fill();
                 ctx.closePath();
             }
         }

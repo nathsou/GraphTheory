@@ -1,5 +1,95 @@
 var GraphTheory;
 (function (GraphTheory) {
+    let Utils;
+    (function (Utils) {
+        class AbstractList {
+            constructor(...elements) {
+                this.elements = elements;
+            }
+            peek() {
+                return this.elements[this.elements.length - 1];
+            }
+            size() {
+                return this.elements.length;
+            }
+            isEmpty() {
+                return this.size() === 0;
+            }
+        }
+        class Stack extends AbstractList {
+            push(...elems) {
+                this.elements.push(...elems);
+            }
+            pop() {
+                return this.elements.pop();
+            }
+        }
+        Utils.Stack = Stack;
+        class Queue extends AbstractList {
+            enqueue(...elems) {
+                this.elements.unshift(...elems);
+            }
+            dequeue() {
+                return this.elements.pop();
+            }
+        }
+        Utils.Queue = Queue;
+        class Vec2 {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+            add(v) {
+                return new Vec2(this.x + v.x, this.y + v.y);
+            }
+            sub(v) {
+                return new Vec2(this.x - v.x, this.y - v.y);
+            }
+            mul(k) {
+                return new Vec2(this.x * k, this.y * k);
+            }
+            div(k) {
+                return this.mul(1 / k);
+            }
+            map(f) {
+                return new Vec2(f(this.x), f(this.y));
+            }
+            dot(v) {
+                return this.x * v.x + this.y * v.y;
+            }
+            length() {
+                return Math.sqrt(this.lengthSq());
+            }
+            lengthSq() {
+                return this.dot(this);
+            }
+            normalize() {
+                return this.div(this.length());
+            }
+            normalVector() {
+                return new Vec2(-this.y, this.x).normalize();
+            }
+            angle() {
+                return Math.atan2(this.y, this.x);
+            }
+            distTo(v) {
+                return Math.sqrt(this.distToSq(v));
+            }
+            distToSq(v) {
+                return this.sub(v).lengthSq();
+            }
+            dirTo(v) {
+                return this.sub(v).normalize();
+            }
+            angleTo(v) {
+                return this.angle() - v.angle();
+            }
+        }
+        Utils.Vec2 = Vec2;
+    })(Utils = GraphTheory.Utils || (GraphTheory.Utils = {}));
+})(GraphTheory || (GraphTheory = {}));
+var GraphTheory;
+(function (GraphTheory) {
     function isEdge(obj) {
         return 'from' in obj && 'to' in obj;
     }
@@ -21,13 +111,13 @@ var GraphTheory;
                 let edge;
                 if (isEdge(edges[e])) {
                     edge = edges[e];
-                    edge['cost'] = edge['cost'];
+                    edge['cost'] = edge['cost'] !== undefined ? edge['cost'] : 1;
                 }
                 else {
                     edge = {
                         from: edges[e][0],
                         to: edges[e][1],
-                        cost: edges[e][2]
+                        cost: edges[e][2] !== undefined ? edges[e][2] : 1
                     };
                 }
                 this.addEdge(edge);
@@ -50,6 +140,12 @@ var GraphTheory;
             let e = this.toEdge(edge.from, edge.to);
             return this.getAdjacentVertices(e.from).indexOf(e.to) !== -1;
         }
+        hasOppositeEdge(edge) {
+            return this.hasEdge({ from: edge.to, to: edge.from });
+        }
+        hasNegativeCosts() {
+            return this.edges.some((edge) => edge.cost < 0);
+        }
         addVertex(v) {
             if (!this.hasVertex(v)) {
                 this.vertices.push(v);
@@ -63,6 +159,8 @@ var GraphTheory;
         addEdge(edge) {
             if (this.hasEdge(edge))
                 return;
+            if (edge['cost'] === undefined)
+                edge['cost'] = 1;
             this.edges.push(edge);
             this.adjacency_list.get(edge.from).push(edge.to);
             if (!this.directed && edge.from !== edge.to) {
@@ -110,6 +208,12 @@ var GraphTheory;
         }
         getEdge(i) {
             return this.edges[i];
+        }
+        getCost(u, v) {
+            return this.getEdge(this.getEdgeIndex({
+                from: u,
+                to: v
+            })).cost;
         }
         getAdjacencyList() {
             return this.adjacency_list;
@@ -159,6 +263,7 @@ var GraphTheory;
             ctx.closePath();
         }
         draw(cnv, vertices_coords, options = {
+                show_costs: false,
                 vertex_radius: 10,
                 vertex_color: 'lightblue',
                 edge_width: 1,
@@ -172,14 +277,30 @@ var GraphTheory;
                 let origin = vertices_coords.get(edge.from), dst = vertices_coords.get(edge.to);
                 this.drawEdge(ctx, options.vertex_radius, options.edge_color, origin, dst);
                 ctx.closePath();
+                if (options.show_costs) {
+                    let n = origin.dirTo(dst).normalVector();
+                    let sgn = Math.sign;
+                    let text_pos = origin.add(dst.sub(origin).div(2));
+                    text_pos = text_pos.add(n.mul(10));
+                    ctx.beginPath();
+                    ctx.textAlign = 'center';
+                    ctx.strokeText(edge.cost.toString(), text_pos.x, text_pos.y);
+                    ctx.stroke();
+                    ctx.closePath();
+                }
             }
-            ctx.fillStyle = options.vertex_color;
             for (let [v, p] of vertices_coords) {
                 ctx.beginPath();
+                ctx.fillStyle = options.vertex_color;
                 ctx.arc(p.x, p.y, options.vertex_radius, 0, 2 * Math.PI);
                 ctx.fill();
-                ctx.strokeText(v.toString(), p.x - 3, p.y + 3, options.vertex_radius);
                 ctx.stroke();
+                ctx.closePath();
+                ctx.beginPath();
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'black';
+                ctx.fillText(v.toString(), p.x, p.y + 3, options.vertex_radius);
+                ctx.fill();
                 ctx.closePath();
             }
         }
@@ -205,11 +326,11 @@ var GraphTheory;
 var GraphTheory;
 (function (GraphTheory) {
     class DirectedGraph extends GraphTheory.AbstractGraph {
-        constructor(vertices, edges) {
-            super(vertices, edges, true);
+        constructor(vertices, arcs) {
+            super(vertices, arcs, true);
         }
         isArcUndirected(arc) {
-            return this.hasEdge(arc) && this.hasEdge({ from: arc.to, to: arc.from });
+            return this.hasEdge(arc) && this.hasOppositeEdge(arc);
         }
         static fromUndirected(graph) {
             let directed = new DirectedGraph(graph.getVertices(), graph.getEdges());
@@ -247,56 +368,130 @@ var GraphTheory;
 var PlayGround;
 (function (PlayGround_1) {
     var GT = GraphTheory;
+    var Vec2 = GT.Utils.Vec2;
     class PlayGround {
         constructor(cnv, directed = false) {
             this.cnv = cnv;
             this.vertex_radius = 10;
+            this.needs_redraw = true;
+            this.show_costs = true;
             this.graph = directed ? new GT.DirectedGraph([], []) : new GT.Graph([], []);
             this.vertices_coords = new Map();
+            this.mouse_drag = { origin: undefined, dest: undefined };
             this.ctx = cnv.getContext('2d');
-            this.draw();
-            let rad_sq = Math.pow(this.vertex_radius, 2);
-            let overlapping = (a, b) => {
-                return (Math.pow((a.x - b.x), 2) + Math.pow((a.y - b.y), 2)) <= rad_sq;
-            };
-            let origin;
-            let mouse_move_listener = (e) => {
-                if (origin !== undefined) {
-                    this.draw();
-                    this.ctx.beginPath();
-                    let p = this.vertices_coords.get(origin);
-                    this.ctx.moveTo(p.x, p.y);
-                    this.ctx.lineTo(e.clientX, e.clientY);
-                    this.ctx.stroke();
-                    this.ctx.closePath();
-                }
-            };
-            cnv.addEventListener('mousedown', e => {
-                for (let [v, p] of this.vertices_coords) {
-                    if (overlapping(p, { x: e.clientX, y: e.clientY })) {
-                        origin = v;
-                    }
-                }
-                cnv.addEventListener('mousemove', mouse_move_listener);
+            this.cnv.addEventListener('mousedown', e => {
+                this.onMouseDown(e);
             });
-            cnv.addEventListener('mouseup', (e) => {
-                if (origin === undefined) {
-                    let v = this.graph.getVertices().length;
-                    this.vertices_coords.set(v, { x: e.clientX, y: e.clientY });
-                    this.addVertex(v);
+            this.cnv.addEventListener('mouseup', e => {
+                this.onMouseUp(e);
+            });
+            this.cnv.addEventListener('mousemove', e => {
+                this.onMouseMove(e);
+            });
+            let redraw = () => {
+                if (this.needs_redraw) {
+                    this.needs_redraw = false;
+                    this.draw();
                 }
-                else {
-                    for (let [v, p] of this.vertices_coords) {
-                        if (v !== origin && overlapping(p, { x: e.clientX, y: e.clientY })) {
-                            let dst = v;
-                            this.addEdge(origin, dst);
+                requestAnimationFrame(redraw);
+            };
+            redraw();
+        }
+        overlappingVertex(a, b) {
+            return (Math.pow((a.x - b.x), 2) + Math.pow((a.y - b.y), 2)) <= Math.pow(this.vertex_radius, 2);
+        }
+        overlappingEdge(p, edge, radius = 4) {
+            if (edge.from.sub(p).dot(p.sub(edge.to)) < 0)
+                return false;
+            let edge_dir = edge.from.dirTo(edge.to);
+            let proj = edge.from.add(edge_dir.mul(p.sub(edge.from).dot(edge_dir)));
+            return proj.distToSq(p) <= Math.pow(radius, 2);
+        }
+        checkEdgeMouseOver(p, cb, radius = 4) {
+            let i = 0;
+            for (let edge of this.graph.getEdges()) {
+                let ed = {
+                    from: this.vertices_coords.get(edge.from),
+                    to: this.vertices_coords.get(edge.to)
+                };
+                if (this.overlappingEdge(p, ed, radius)) {
+                    cb.call(this, ed, i);
+                }
+                i++;
+            }
+        }
+        onMouseDown(e) {
+            for (let [v, p] of this.vertices_coords) {
+                if (this.overlappingVertex(p, new Vec2(e.clientX, e.clientY))) {
+                    this.mouse_drag.origin = v;
+                }
+            }
+        }
+        onMouseMove(e) {
+            if (this.mouse_drag.origin !== undefined) {
+                this.draw();
+                this.ctx.beginPath();
+                let p = this.vertices_coords.get(this.mouse_drag.origin);
+                this.ctx.moveTo(p.x, p.y);
+                this.ctx.lineTo(e.clientX, e.clientY);
+                this.ctx.stroke();
+                this.ctx.closePath();
+            }
+            else if (this.hovering_vertex !== undefined) {
+                this.vertices_coords.set(this.hovering_vertex, new Vec2(e.clientX, e.clientY));
+                this.draw();
+            }
+            else {
+                document.body.style.cursor = 'default';
+                this.hovering_edge = undefined;
+                this.checkEdgeMouseOver(new Vec2(e.clientX, e.clientY), (edge, idx) => {
+                    document.body.style.cursor = 'pointer';
+                    this.hovering_edge = idx;
+                });
+            }
+        }
+        onMouseUp(e) {
+            if (this.hovering_vertex !== undefined) {
+                document.body.style.cursor = 'default';
+                this.hovering_vertex = undefined;
+            }
+            else if (this.hovering_edge !== undefined) {
+                let edges = [this.hovering_edge];
+                let top_edge = this.graph.getEdge(this.hovering_edge);
+                if (this.graph.isDirected() && this.graph.hasOppositeEdge(top_edge)) {
+                    edges.push(this.graph.getEdgeIndex({ from: top_edge.to, to: top_edge.from }));
+                }
+                for (let idx of edges) {
+                    let edge = this.graph.getEdge(idx);
+                    let def = edge.cost !== undefined ? edge.cost.toString() : '1';
+                    let new_cost = prompt('Set cost of [' + edge.from + ' -> ' + edge.to + ']', def);
+                    if (new_cost === null)
+                        new_cost = def;
+                    edge.cost = Number(new_cost);
+                }
+            }
+            else if (this.mouse_drag.origin === undefined) {
+                let v = this.graph.getVertices().length;
+                this.vertices_coords.set(v, new Vec2(e.clientX, e.clientY));
+                this.addVertex(v);
+            }
+            else {
+                for (let [v, p] of this.vertices_coords) {
+                    if (this.overlappingVertex(p, new Vec2(e.clientX, e.clientY))) {
+                        this.mouse_drag.dest = v;
+                        if (v !== this.mouse_drag.origin) {
+                            this.addEdge(this.mouse_drag.origin, this.mouse_drag.dest);
+                        }
+                        else {
+                            this.hovering_vertex = v;
+                            document.body.style.cursor = 'move';
                         }
                     }
                 }
-                this.draw();
-                origin = undefined;
-                cnv.removeEventListener('mousemove', mouse_move_listener);
-            });
+            }
+            this.needs_redraw = true;
+            this.mouse_drag.origin = undefined;
+            this.mouse_drag.dest = undefined;
         }
         addVertex(v) {
             this.graph.addVertex(v);
@@ -306,6 +501,7 @@ var PlayGround;
         }
         draw() {
             this.graph.draw(this.cnv, this.vertices_coords, {
+                show_costs: true,
                 vertex_color: 'lightgreen',
                 vertex_radius: this.vertex_radius,
                 edge_color: 'black',
@@ -315,44 +511,6 @@ var PlayGround;
     }
     PlayGround_1.PlayGround = PlayGround;
 })(PlayGround || (PlayGround = {}));
-var GraphTheory;
-(function (GraphTheory) {
-    let Utils;
-    (function (Utils) {
-        class AbstractList {
-            constructor(...elements) {
-                this.elements = elements;
-            }
-            peek() {
-                return this.elements[this.elements.length - 1];
-            }
-            size() {
-                return this.elements.length;
-            }
-            isEmpty() {
-                return this.size() === 0;
-            }
-        }
-        class Stack extends AbstractList {
-            push(...elems) {
-                this.elements.push(...elems);
-            }
-            pop() {
-                return this.elements.pop();
-            }
-        }
-        Utils.Stack = Stack;
-        class Queue extends AbstractList {
-            enqueue(...elems) {
-                this.elements.unshift(...elems);
-            }
-            dequeue() {
-                return this.elements.pop();
-            }
-        }
-        Utils.Queue = Queue;
-    })(Utils = GraphTheory.Utils || (GraphTheory.Utils = {}));
-})(GraphTheory || (GraphTheory = {}));
 var GraphTheory;
 (function (GraphTheory) {
     let Algorithms;
@@ -481,25 +639,58 @@ var GraphTheory;
             SHORTEST_PATH_METHOD[SHORTEST_PATH_METHOD["BELLMAN_FORD"] = 1] = "BELLMAN_FORD";
             SHORTEST_PATH_METHOD[SHORTEST_PATH_METHOD["AUTO"] = 2] = "AUTO";
         })(SHORTEST_PATH_METHOD = Algorithms.SHORTEST_PATH_METHOD || (Algorithms.SHORTEST_PATH_METHOD = {}));
-        function getShortestPath(g, initial_vertex, method = SHORTEST_PATH_METHOD.AUTO) {
+        function getShortestPaths(g, initial_vertex, method = SHORTEST_PATH_METHOD.AUTO) {
+            switch (method) {
+                case SHORTEST_PATH_METHOD.DIJKSTRA:
+                    return dijkstra(g, initial_vertex);
+                case SHORTEST_PATH_METHOD.BELLMAN_FORD:
+                    return bellman_ford(g, initial_vertex);
+                case SHORTEST_PATH_METHOD.AUTO:
+                    let method = g.hasNegativeCosts() ?
+                        SHORTEST_PATH_METHOD.BELLMAN_FORD : SHORTEST_PATH_METHOD.DIJKSTRA;
+                    return getShortestPaths(g, initial_vertex, method);
+            }
+            return null;
         }
-        Algorithms.getShortestPath = getShortestPath;
+        Algorithms.getShortestPaths = getShortestPaths;
         function dijkstra(g, initial_vertex) {
             let dist_map = new Map();
             for (let v of g.getVertices()) {
-                dist_map.set(v, Infinity);
+                dist_map.set(v, { pred: null, cost: Infinity });
             }
-            dist_map.set(initial_vertex, 0);
-            let Q = g.getVertices().slice;
+            dist_map.set(initial_vertex, { pred: null, cost: 0 });
+            let Q = g.getVertices().slice();
             while (Q.length !== 0) {
-                let min = Infinity, vertex = -1;
+                let min = Infinity, idx = -1;
                 for (let i = 0; i < Q.length; i++) {
-                    if (dist_map.get(g.getVertex(i)) < min) {
-                        min = dist_map.get(g.getVertex(i));
-                        vertex;
+                    let v = Q[i];
+                    if (dist_map.get(v).cost < min) {
+                        min = dist_map.get(v).cost;
+                        idx = i;
                     }
                 }
+                let s1 = Q[idx];
+                let neighbors = g.getAdjacentVertices(s1);
+                if (neighbors.length === 0) {
+                    return dist_map;
+                }
+                for (let s2 of neighbors) {
+                    let cost = g.getCost(s1, s2);
+                    let dist = dist_map.get(s1).cost + cost;
+                    if (cost < 0)
+                        throw new RangeError(`Cost of edge [${s1} -> ${s2}] is negative (${cost}) ` +
+                            'use SHORTEST_PATH_METHOD.BELLMAN_FORD instead of DIJKSTRA.');
+                    let dist2 = dist_map.get(s2).cost;
+                    if (dist2 > dist) {
+                        dist_map.set(s2, { pred: s1, cost: dist });
+                    }
+                }
+                Q.splice(idx, 1);
             }
+            return dist_map;
+        }
+        function bellman_ford(g, initial_vertex) {
+            throw new Error('Bellman-Ford not yet implemented');
         }
     })(Algorithms = GraphTheory.Algorithms || (GraphTheory.Algorithms = {}));
 })(GraphTheory || (GraphTheory = {}));

@@ -240,40 +240,88 @@ namespace GraphTheory {
             DIJKSTRA, BELLMAN_FORD, AUTO
         }
 
-        export function getShortestPath<T>(
+        export function getShortestPaths<T>(
             g: AbstractGraph<T>,
             initial_vertex: T,
             method: SHORTEST_PATH_METHOD = SHORTEST_PATH_METHOD.AUTO
-        ) {
+        ) : Map<T, {pred: T, cost: number}> {
+            
+            switch (method) {
 
+                case SHORTEST_PATH_METHOD.DIJKSTRA:
+                    return dijkstra(g, initial_vertex);
+
+                case SHORTEST_PATH_METHOD.BELLMAN_FORD:
+                    return bellman_ford(g, initial_vertex);
+
+                case SHORTEST_PATH_METHOD.AUTO:
+                    //use bellman-ford if there are negative costs, dijkstra otherwise
+                    let method = g.hasNegativeCosts() ? 
+                        SHORTEST_PATH_METHOD.BELLMAN_FORD : SHORTEST_PATH_METHOD.DIJKSTRA;
+
+                    return getShortestPaths(g, initial_vertex, method);
+            }
+
+            return null;
         } 
 
-        function dijkstra<T>(g: AbstractGraph<T>, initial_vertex: T) {
-            let dist_map = new Map<T, number>();
+        function dijkstra<T>(g: AbstractGraph<T>, initial_vertex: T) : Map<T, {pred: T, cost: number}> {
+            let dist_map = new Map<T, {pred: T, cost: number}>();
 
             //initialize dist_map
             for (let v of g.getVertices()) {
-                dist_map.set(v, Infinity);
+                dist_map.set(v, {pred: null, cost: Infinity});
             }
 
-            dist_map.set(initial_vertex, 0);
+            dist_map.set(initial_vertex, {pred: null, cost: 0});
 
-            let Q = g.getVertices().slice;
+            let Q = g.getVertices().slice();
             
             while (Q.length !== 0) {
+
+                //find min vertex
                 let min = Infinity,
-                    vertex = -1;
+                    idx = -1;
 
                 for (let i = 0; i < Q.length; i++) {
-                    if (dist_map.get(g.getVertex(i)) < min) {
-                        min = dist_map.get(g.getVertex(i));
-                        vertex
+                    let v = Q[i];
+                    if (dist_map.get(v).cost < min) {
+                        min = dist_map.get(v).cost;
+                        idx = i;
                     }
                 }
+
+                let s1 = Q[idx];
+                let neighbors = g.getAdjacentVertices(s1);
+
+                if (neighbors.length === 0) {
+                    return dist_map;
+                }
+
+                for (let s2 of neighbors) {
+                    let cost = g.getCost(s1, s2);
+                    let dist = dist_map.get(s1).cost + cost;
+
+                    if (cost < 0)
+                        throw new RangeError(`Cost of edge [${s1} -> ${s2}] is negative (${cost}) ` + 
+                        'use SHORTEST_PATH_METHOD.BELLMAN_FORD instead of DIJKSTRA.');
+
+                    let dist2 = dist_map.get(s2).cost;
+                    if (dist2 > dist) {
+                        dist_map.set(s2, {pred: s1, cost: dist});
+                    }
+                }
+
+                //remove the min vertex from the list
+                Q.splice(idx, 1);
+                
             }
 
-            
+            return dist_map;
+        }
 
+        function bellman_ford<T>(g: AbstractGraph<T>, initial_vertex: T) : Map<T, {pred: T, cost: number}> {
+            throw new Error('Bellman-Ford not yet implemented');
         }
 
     }

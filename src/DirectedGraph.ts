@@ -18,12 +18,12 @@ namespace GraphTheory {
         /**
          * Creates an instance of DirectedGraph.
          * @param {T[]} vertices 
-         * @param {(T[][] | Edge<T>[])} edges 
+         * @param {(T[][] | Arc<T>[])} arcs 
          * 
          * @memberOf Graph
          */
-        constructor(vertices: T[], edges: T[][] | Edge<T>[]) {
-            super(vertices, edges, true);
+        constructor(vertices: T[], arcs: T[][] | Arc<T>[]) {
+            super(vertices, arcs, true);
         }
 
         /**
@@ -34,7 +34,7 @@ namespace GraphTheory {
          * @memberOf DirectedGraph
          */
         public isArcUndirected(arc: Arc<T>) : boolean {
-            return this.hasEdge(arc) && this.hasEdge({from: arc.to, to: arc.from});
+            return this.hasEdge(arc) && this.hasOppositeEdge(arc);
         }
 
         /**
