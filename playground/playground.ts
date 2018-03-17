@@ -3,41 +3,79 @@
 /// <reference path="../src/DirectedGraph.ts" />
 /// <reference path="../src/Utils.ts" />
 
-namespace PlayGround {
+namespace GraphTheory {
 
 import GT = GraphTheory;
+import GR = GT.Renderer;
 import Vec2 = GT.Utils.Vec2;
 
-    export class PlayGround {
+    export interface JsonPlayGround<T> {
+        graph: GT.JsonGraph<T>,
+        vertices_coords: [T, {x: number, y: number}][]
+    }
 
-        private graph: GT.Graph<number>;
-        private vertices_coords: Map<number, Vec2>;
+    /**
+     * Checks if a given object implements the JsonPlayGround<T> interface
+     * 
+     * @export
+     * @template T 
+     * @param {*} obj 
+     * @returns {obj is JsonPlayGround<T>} 
+     */
+    export function isJsonPlayGround<T>(obj: any) : obj is JsonPlayGround<T> {
+        return 'graph' in obj && 'vertices_coords' in obj && GT.isJsonGraph(obj.graph);
+    }
+
+    export class PlayGround<T> {
+
+        private graph: GT.AbstractGraph<T>;
+        private vertices_coords: Map<T, Vec2>;
+        private renderer: GR.Renderer<T>;
         private ctx: CanvasRenderingContext2D;
-        private vertex_radius = 10;
-        private mouse_drag: {origin: number, dest: number};
+        private vertex_radius = 30;
+        private mouse_drag: {origin: T, dest: T};
         private hovering_edge: number;
-        private hovering_vertex: number;
+        private prev_label: T;
+        private next_label: (last: T) => T;
+        private moving_vertex: T;
         private needs_redraw = true;
         private show_costs = true;
+        /**
+         * Prevents addVertex() to be called if set to true
+         * 
+         * @private
+         * 
+         * @memberOf PlayGround
+         */
+        private locked = false;
 
-        constructor (private cnv: HTMLCanvasElement, directed = false) {
+        constructor (private cnv: HTMLCanvasElement, next_label: GT.Utils.labels.LabelProvider<T>, directed = false) {
 
-            this.graph = directed ? new GT.DirectedGraph<number>([], []) : new GT.Graph<number>([], []);
-            this.vertices_coords = new Map<number, Vec2>();
+            this.prev_label = null;
+            this.next_label = next_label;
+
+            this.graph = directed ? new GT.DirectedGraph<T>([], []) : new GT.Graph<T>([], []);
+            this.vertices_coords = new Map<T, Vec2>();
             this.mouse_drag = {origin: undefined, dest: undefined};
+
+            if (next_label == null) {
+                this.locked = true;
+            }
+
+            this.renderer = new GT.Renderer.Renderer<T>(this.graph, this.cnv);
 
             this.ctx = cnv.getContext('2d');
 
             this.cnv.addEventListener('mousedown', e => {
-                this.onMouseDown(e);
+                this.onMouseDown(new Vec2(e.clientX, e.clientY));
             });
 
             this.cnv.addEventListener('mouseup', e => {
-                this.onMouseUp(e);
+                this.onMouseUp(new Vec2(e.clientX, e.clientY));
             });
 
             this.cnv.addEventListener('mousemove', e => {
-                this.onMouseMove(e);
+                this.onMouseMove(new Vec2(e.clientX, e.clientY));
             });
 
             let redraw = () => {
@@ -51,15 +89,29 @@ import Vec2 = GT.Utils.Vec2;
             redraw();
         }
 
+        public resize(width: number, height: number) : void {
+            this.cnv.width = width;
+            this.cnv.height = height;
+            this.draw();
+        }
+
+        /**
+         * Toggles edges's cost visibility
+         * 
+         * @memberOf PlayGround
+         */
+        public toggleCostsVisibility() : void {
+            this.show_costs = !this.show_costs;
+            this.needs_redraw = true;
+        }
+
         private overlappingVertex(a: Vec2, b: Vec2) : boolean {
-            return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) <= this.vertex_radius ** 2;
+            return a.distToSq(b) <= this.vertex_radius ** 2;
         }
 
         //check if a point is over an edge
         private overlappingEdge(p: Vec2, edge: {from: Vec2, to: Vec2}, radius = 4) : boolean {
-
             if (edge.from.sub(p).dot(p.sub(edge.to)) < 0) return false;
-
             let edge_dir = edge.from.dirTo(edge.to)
 
             //project p onto the edge and compute the distance between p and the projection
@@ -68,8 +120,17 @@ import Vec2 = GT.Utils.Vec2;
             return proj.distToSq(p) <= radius ** 2;
         } 
 
-        private checkEdgeMouseOver(p: Vec2, cb: (edge: {from: Vec2, to: Vec2}, idx: number) => void, radius = 4) : void {
+        private checkVertexMouseOver(p: Vec2, cb: (vertex: T, idx: number) => void) : void {
+            let i = 0;
+            for (let [vert, coords] of this.vertices_coords) {
+                if (this.overlappingVertex(coords, p)) {
+                    cb.call(this, vert, i);
+                }
+                i++;
+            }
+        }
 
+        private checkEdgeMouseOver(p: Vec2, cb: (edge: {from: Vec2, to: Vec2}, idx: number) => void, radius = 4) : void {
             let i = 0;
             for (let edge of this.graph.getEdges()) {
                 let ed = {
@@ -84,42 +145,51 @@ import Vec2 = GT.Utils.Vec2;
             }
         }
 
-        private onMouseDown(e: MouseEvent) : void {
-
-            for (let [v, p] of this.vertices_coords) {
-                if (this.overlappingVertex(p, new Vec2(e.clientX, e.clientY))) {
-                    this.mouse_drag.origin = v;
-                }
-            }
+        private onMouseDown(p: Vec2) : void {
+            if (this.mouse_drag.origin === undefined) {
+                this.checkVertexMouseOver(p, (vert: T, idx: number) => {
+                    this.mouse_drag.origin = vert;
+                });
+            }  
         }
 
-        private onMouseMove(e: MouseEvent) : void {
+        private onMouseMove(p: Vec2) : void {
+
+            let hovering_vertex = false;
+
+            this.checkVertexMouseOver(p, (v: T) => {
+                hovering_vertex = true;
+                this.hovering_edge = undefined;
+            });
+
             if (this.mouse_drag.origin !== undefined) {
                 this.draw();
                 this.ctx.beginPath();
-                let p = this.vertices_coords.get(this.mouse_drag.origin);
-                this.ctx.moveTo(p.x, p.y);
-                this.ctx.lineTo(e.clientX, e.clientY);
+                let coords = this.vertices_coords.get(this.mouse_drag.origin);
+                this.ctx.moveTo(coords.x, coords.y);
+                this.ctx.lineTo(p.x, p.y);
                 this.ctx.stroke();
                 this.ctx.closePath();
-            } else if (this.hovering_vertex !== undefined) {
-                this.vertices_coords.set(this.hovering_vertex, new Vec2(e.clientX, e.clientY));
+            } else if (this.moving_vertex !== undefined) {
+                this.vertices_coords.set(this.moving_vertex, p);
                 this.draw();
             } else {
                 document.body.style.cursor = 'default';
                 this.hovering_edge = undefined;
-                this.checkEdgeMouseOver(new Vec2(e.clientX, e.clientY), (edge, idx) => {
-                    document.body.style.cursor = 'pointer';
-                    this.hovering_edge = idx;
-                });
+                if (!hovering_vertex) {
+                    this.checkEdgeMouseOver(p, (edge, idx) => {
+                        document.body.style.cursor = 'pointer';
+                        this.hovering_edge = idx;
+                    });
+                }
             }
         }
 
-        private onMouseUp(e: MouseEvent) : void {
-            if (this.hovering_vertex !== undefined) {
+        private onMouseUp(p: Vec2) : void {
+            if (this.moving_vertex !== undefined) { //stop moving vertex
                 document.body.style.cursor = 'default';
-                this.hovering_vertex = undefined;
-            } else if (this.hovering_edge !== undefined) {
+                this.moving_vertex = undefined;
+            } else if (this.hovering_edge !== undefined) { //change cost
                 let edges = [this.hovering_edge];
                 let top_edge = this.graph.getEdge(this.hovering_edge);
 
@@ -135,22 +205,19 @@ import Vec2 = GT.Utils.Vec2;
                     if (new_cost === null) new_cost = def; //cancel
                     edge.cost = Number(new_cost);
                 }
-            } else if (this.mouse_drag.origin === undefined) {
-                let v = this.graph.getVertices().length;
-                this.vertices_coords.set(v, new Vec2(e.clientX, e.clientY));
-                this.addVertex(v);
-            } else {
-                for (let [v, p] of this.vertices_coords) {
-                    if (this.overlappingVertex(p, new Vec2(e.clientX, e.clientY))) {
-                        this.mouse_drag.dest = v;
-                        if (v !== this.mouse_drag.origin) {
-                            this.addEdge(this.mouse_drag.origin, this.mouse_drag.dest);
-                        } else {
-                            this.hovering_vertex = v;
-                            document.body.style.cursor = 'move';
-                        }
+            } else if (this.mouse_drag.origin === undefined) { //add new vertex
+                let v = this.addVertex();
+                this.vertices_coords.set(v, p);
+            } else if (this.mouse_drag.origin !== undefined) {
+                this.checkVertexMouseOver(p, (vert: T, idx: number) => {
+                    this.mouse_drag.dest = vert;
+                    if (vert !== this.mouse_drag.origin) { //add new edge
+                        this.addEdge(this.mouse_drag.origin, this.mouse_drag.dest);
+                    } else { //move vertex
+                        this.moving_vertex = vert;
+                        document.body.style.cursor = 'move';
                     }
-                }
+                });
             }
 
             this.needs_redraw = true;
@@ -158,22 +225,80 @@ import Vec2 = GT.Utils.Vec2;
             this.mouse_drag.dest = undefined;
         }
 
-        public addVertex(v: number) : void {
-            this.graph.addVertex(v);
+        public addVertex() : T {
+            if (this.locked) {
+                throw new Error(`this PlayGround is locked, cannot add any vertex, call unlock() to do so`);
+            }
+            this.prev_label = this.next_label(this.prev_label);
+            this.graph.addVertex(this.prev_label);
+            return this.prev_label;
         }
 
-        public addEdge(from: number, to: number) : void {
+        public addEdge(from: T, to: T) : void {
             this.graph.addEdge({from: from, to: to});
         }
 
         public draw() : void {
-            this.graph.draw(this.cnv, this.vertices_coords, {
-                show_costs: true,
-                vertex_color: 'lightgreen',
-                vertex_radius: this.vertex_radius,
-                edge_color: 'black',
-                edge_width: 1
-            });
+            this.renderer.draw(this.vertices_coords);
+        }
+
+        public setProfile(profile: GR.RendererProfile) {
+            this.renderer.setProfile(profile);
+        }
+
+        public setGraph(graph: AbstractGraph<T>) : void {
+            this.graph = graph;
+            this.renderer = new GT.Renderer.Renderer<T>(graph, this.cnv);
+        }
+
+        public getGraph() : AbstractGraph<T> {
+            return this.graph;
+        }
+
+        public lock() : void {
+            this.locked = true;
+        }
+
+        public isLocked() : boolean {
+            return this.locked;
+        }
+
+        public unlock(next_label: GT.Utils.labels.LabelProvider<T>) : void {
+            this.next_label = next_label;
+            this.locked = false;
+            const vertices = this.graph.getVertices();
+            this.prev_label = vertices[vertices.length - 1];
+        }
+
+        public setVerticesCoordinates(vertices_coords: Map<T, Vec2>) : void {
+            this.vertices_coords = vertices_coords;
+        }
+
+        public toJsonGraph() : JsonPlayGround<T> {
+            return {
+                graph: this.graph.toJsonGraph(),
+                vertices_coords: [...this.vertices_coords]
+            }
+        }
+
+        public toJSON() : string {
+            return JSON.stringify(this.toJsonGraph());
+        }
+
+        static fromJSON<T>(cnv: HTMLCanvasElement, json: JsonPlayGround<T> | string) : PlayGround<T> {
+            let jpg: JsonPlayGround<T> = typeof json === 'string' ? JSON.parse(json) : json;
+            
+            let pg = new PlayGround<T>(cnv, null, jpg.graph.directed);
+            pg.setGraph(jpg.graph.directed ? DirectedGraph.fromJSON(jpg.graph) : Graph.fromJSON(jpg.graph));
+            let map: [T, Vec2][] = [];
+
+            for (let v of jpg.vertices_coords) {
+                map.push([v[0], new Vec2(v[1].x, v[1].y)])
+            }
+
+            pg.setVerticesCoordinates(new Map<T, Vec2>(map));
+
+            return pg;
         }
     }
 }

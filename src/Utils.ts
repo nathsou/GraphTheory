@@ -2,6 +2,70 @@ namespace GraphTheory {
 
     export namespace Utils {
 
+        export namespace labels { //default label providers
+
+            export type LabelProvider<T> = (last: T) => T;
+
+            /**
+             * Provides integer labels starting from 0 : [0, 1, 2, ...]
+             * 
+             * @param {number} last 
+             * @returns {number} 
+             */
+            export const next_number: LabelProvider<number> = (last: number) : number => last === null ? 0 : last + 1;
+
+            /**
+             * Provides integer labels starting from 1 :  [1, 2, 3, ...]
+             * 
+             * @param {number} last 
+             * @returns {number} 
+             */
+            export const next_number1: LabelProvider<number> = (last: number) : number => last === null ? 1 : last + 1;
+           
+            /**
+             * Provides uppercase letter labels, first 26 are [A..Z], then [A1..Z1] etc..
+             * 
+             * @export
+             * @param {string} last 
+             * @returns {string} - the next label
+             */
+            export const next_letter: LabelProvider<string> = (last: string) : string => {
+                if (last === null) return 'A';
+
+                let code = last.charCodeAt(0),
+                    idx = (code - 64) % 26,
+                    letter = String.fromCharCode(65 + idx),
+                    nb = Number(last.substr(1));
+
+                return letter + (idx === 0 ? nb + 1 : (nb === 0 ? '' : nb)).toString();
+            }
+
+            /**
+             * Provides lowercase letter labels, first 26 are [a..z], then [a1..z1] etc..
+             * 
+             * @param {string} last 
+             * @returns {string} 
+             */
+            export const next_lowercase_letter: LabelProvider<string> = 
+                (last: string) : string => next_letter(last === null ? null : last.toUpperCase()).toLowerCase();
+
+            /**
+             * Generates a label provider given an array (repeating labels every array.length calls)
+             * 
+             * @export
+             * @template T 
+             * @param {T[]} array 
+             * @param {T} last 
+             * @returns LabelProvider<T>
+             */
+            export function next_element<T>(array: T[]) : LabelProvider<T> {
+                return (last: T) => {
+                    if (last === null) return array[0];
+                    return array[(array.indexOf(last) + 1) % array.length];
+                };
+            }
+        }
+
         /**
          * Abstract representation of a list of elements
          * 
@@ -229,7 +293,7 @@ namespace GraphTheory {
             }
 
             /**
-             * Computes a normal vector to this Vec2 and returns it
+             * Computes a right-hand normal vector to this Vec2 and returns it
              * 
              * @returns {Vec2} 
              * 
@@ -295,10 +359,48 @@ namespace GraphTheory {
              * @memberOf Vec2
              */
             public angleTo(v: Vec2) : number {
-                return this.angle() - v.angle();
+                return this.sub(v).angle();
             }
         }
 
+        /**
+         * Constructs a path from a precedence map
+         * 
+         * @export
+         * @template T 
+         * @param {T} vertex 
+         * @param {Map<T, {cost: number, pred: T}>} map 
+         * @returns {{cost: number, path: T[]}} - the path and its cost
+         */
+        export function precedenceMapToPath<T>(vertex: T, map: Map<T, {cost: number, pred: T}>) : {cost: number, path: T[]} {
+
+            let path: T[] = [];
+
+            let v = vertex;
+
+            while (map.get(v).pred !== null) {
+                path.push(v);
+                v = map.get(v).pred;
+            }
+
+            path.push(v);
+
+            let cost = map.get(vertex).cost;
+
+            return {cost: cost, path: cost !== Infinity ? path.reverse() : null};
+        }
+
+        export function precedenceMapToPaths<T>(map: Map<T, {cost: number, pred: T}>) : Map<T, {cost: number, path: T[]}> {
+
+            let paths = new Map<T, {cost: number, path: T[]}>();
+
+            for (let v of map.keys()) {
+                let cost = map.get(v).cost;
+                paths.set(v, precedenceMapToPath(v, map));
+            }
+
+            return paths;
+        }
     }
 
 }

@@ -16,44 +16,34 @@
 
             let playground;
 
+            const demo_graphs = {
+                "demo1": {"graph":{"vertices":["a","b","c","d","e","f","g"],"edges":[{"from":"a","to":"b","cost":7},{"from":"b","to":"c","cost":8},{"from":"c","to":"e","cost":5},{"from":"e","to":"g","cost":9},{"from":"f","to":"g","cost":11},{"from":"e","to":"f","cost":8},{"from":"d","to":"f","cost":6},{"from":"d","to":"e","cost":15},{"from":"b","to":"d","cost":9},{"from":"a","to":"d","cost":5},{"from":"b","to":"e","cost":7}],"directed":false},"vertices_coords":[["a",{"x":230,"y":88}],["b",{"x":369,"y":182}],["c",{"x":536,"y":185}],["d",{"x":233,"y":270}],["e",{"x":450,"y":272}],["f",{"x":372,"y":361}],["g",{"x":538,"y":362}]]},
+                "demo2": {"graph":{"vertices":["s","a","b","c","d","e","f","g","h","i"],"edges":[{"from":"s","to":"a","cost":4},{"from":"a","to":"b","cost":-2},{"from":"b","to":"c","cost":2},{"from":"c","to":"f","cost":-2},{"from":"f","to":"i","cost":1},{"from":"s","to":"d","cost":7},{"from":"d","to":"e","cost":5},{"from":"e","to":"f","cost":4},{"from":"s","to":"g","cost":5},{"from":"d","to":"g","cost":3},{"from":"e","to":"h","cost":3},{"from":"g","to":"h","cost":3},{"from":"h","to":"i","cost":2},{"from":"a","to":"d","cost":2},{"from":"b","to":"e","cost":4}],"directed":true},"vertices_coords":[["s",{"x":110,"y":239}],["a",{"x":200,"y":145}],["b",{"x":328,"y":144}],["c",{"x":448,"y":145}],["d",{"x":202,"y":238}],["e",{"x":327,"y":236}],["f",{"x":449,"y":234}],["g",{"x":201,"y":329}],["h",{"x":328,"y":328}],["i",{"x":450,"y":326}]]},
+                "demo3": {"graph":{"vertices":[1,2,3,4,5,6,7,8,9,10,11,12],"edges":[{"from":3,"to":6,"cost":1},{"from":6,"to":9,"cost":1},{"from":9,"to":12,"cost":1},{"from":12,"to":11,"cost":1},{"from":11,"to":10,"cost":1},{"from":10,"to":7,"cost":1},{"from":7,"to":4,"cost":1},{"from":4,"to":1,"cost":1},{"from":2,"to":3,"cost":1},{"from":2,"to":1,"cost":1},{"from":5,"to":4,"cost":1},{"from":6,"to":5,"cost":1},{"from":9,"to":8,"cost":1},{"from":8,"to":7,"cost":1}],"directed":true},"vertices_coords":[[1,{"x":107,"y":291}],[2,{"x":103,"y":202}],[3,{"x":99,"y":114}],[4,{"x":182,"y":290}],[5,{"x":180,"y":203}],[6,{"x":178,"y":114}],[7,{"x":246,"y":291}],[8,{"x":244,"y":205}],[9,{"x":243,"y":115}],[10,{"x":324,"y":293}],[11,{"x":323,"y":207}],[12,{"x":318,"y":112}]]},
+                "demo4": {"graph":{"vertices":[0,1,2,3,4,5,6,7,8,9],"edges":[{"from":0,"to":1,"cost":1},{"from":1,"to":2,"cost":8},{"from":2,"to":3,"cost":2},{"from":3,"to":4,"cost":8},{"from":2,"to":4,"cost":6},{"from":4,"to":5,"cost":4},{"from":5,"to":6,"cost":1},{"from":6,"to":7,"cost":5},{"from":3,"to":6,"cost":6},{"from":7,"to":8,"cost":7},{"from":8,"to":9,"cost":8},{"from":0,"to":9,"cost":3},{"from":1,"to":3,"cost":3}],"directed":false},"vertices_coords":[[0,{"x":413,"y":357}],[1,{"x":380,"y":180}],[2,{"x":311,"y":184}],[3,{"x":265,"y":261}],[4,{"x":198,"y":187}],[5,{"x":98,"y":196}],[6,{"x":56,"y":371}],[7,{"x":139,"y":370}],[8,{"x":224,"y":366}],[9,{"x":316,"y":361}]]}
+            };
+
             document.addEventListener('DOMContentLoaded', () => {
 
-                let cnv = document.getElementById('cnv');
+                const cnv = document.getElementById('cnv');
                 cnv.width = window.innerWidth;
                 cnv.height = window.innerHeight;
 
-                function randomGraph(nb_vertices) {
+                /*
+                playground = new GraphTheory.PlayGround(
+                    cnv, 
+                    GraphTheory.Utils.labels.next_number,
+                    false
+                );
+                */
+                
+                playground = GraphTheory.PlayGround.fromJSON(cnv, demo_graphs.demo3);
 
-                    let vertices = [];
-                    let edges = [];
-                    let vertices_coords = new Map();
+                playground.draw();
 
-                    for (let i = 0; i < nb_vertices; i++) {
-                        vertices.push(i);
-                        vertices_coords.set(i, {x: Math.random() * cnv.width, y: Math.random() * cnv.height});
-                    }
-
-                    for (let a of vertices) {
-                        for (let b of vertices) {
-                            if (a === b) continue;
-
-                            edges.push([a, b]);
-                        }
-                    }
-
-                    return {graph: new GraphTheory.DirectedGraph(vertices, edges), coords: vertices_coords};
-                }
-
-                playground = new PlayGround.PlayGround(cnv, true);
-
-                let resize = () => {
-                    cnv.width = window.innerWidth;
-                    cnv.height = window.innerHeight;
-                    playground.draw();
-                };
-
-                window.addEventListener('resize', resize);
-                resize();
+                window.addEventListener('resize', e => {
+                    playground.resize(e.srcElement.innerWidth, e.srcElement.innerHeight);
+                });
                 
             });
         </script>

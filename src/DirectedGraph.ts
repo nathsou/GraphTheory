@@ -85,52 +85,5 @@ namespace GraphTheory {
             return new DirectedGraph<T>(this.vertices.slice(), this.edges.slice());
         }
 
-        /**
-         * Draws an arc onto a canvas
-         * 
-         * @protected
-         * @param {CanvasRenderingContext2D} ctx 
-         * @param {number} vertex_radius 
-         * @param {{x: number, y: number}} from 
-         * @param {{x: number, y: number}} to 
-         * 
-         * @memberOf DirectedGraph
-         */
-        protected drawEdge(
-            ctx: CanvasRenderingContext2D,
-            vertex_radius: number,
-            edge_color: string,
-            from: {x: number, y: number},
-            to: {x: number, y: number}
-        ) : void {
-            
-            //angle between the two vertices
-            let a = Math.atan2(to.y - from.y, to.x - from.x);
-            //direction vector
-            let d = {x: Math.cos(a), y: Math.sin(a)};
-            //intersection between the line following the direction vector
-            //and the circle representing the 'to' vertex
-            let p = {x: to.x - vertex_radius * d.x, y: to.y - vertex_radius * d.y};
-
-            //controls the shape of the arrow
-            let b = Math.PI / 1.2;
-            //bottom right
-            let u = {x: Math.cos(a + b), y: Math.sin(a + b)};
-            //bottom left
-            let v = {x: Math.cos(a - b), y: Math.sin(a - b)};
-
-            //draw line
-            super.drawEdge(ctx, vertex_radius, edge_color, from, to);
-
-            //draw triangle
-            ctx.fillStyle = edge_color;
-            ctx.beginPath();
-            ctx.moveTo(p.x + vertex_radius * u.x, p.y + vertex_radius * u.y);
-            ctx.lineTo(p.x, p.y);
-            ctx.lineTo(p.x + vertex_radius * v.x, p.y + vertex_radius * v.y);
-            ctx.fill();
-            ctx.closePath();
-        }
-
     }
 }

@@ -40,12 +40,12 @@ namespace GraphTheory {
     export interface JsonGraph<T> {
         vertices: T[],
         edges: Edge<T>[],
+        directed: boolean,
         adjacency_list?: [T, T[]][]
     }
 
     /**
      * Checks if a given object implements the JsonGraph<T> interface
-     * i.e: if it has 'vertices' and 'edges' properties
      * 
      * @export
      * @template T 
@@ -53,7 +53,7 @@ namespace GraphTheory {
      * @returns {obj is JsonGraph<T>} 
      */
     export function isJsonGraph<T>(obj: any) : obj is JsonGraph<T> {
-        return 'vertices' in obj && 'edges' in obj;
+        return 'vertices' in obj && 'edges' in obj && 'directed' in obj;
     }
 
 
@@ -136,17 +136,19 @@ namespace GraphTheory {
          * @param {T} from 
          * @param {T} to 
          * @returns {Edge<T>} - representation of an edge as stored in adjacency_list
+         * (differentiates directed and undirected cases)
          * 
          * @memberOf AbstractGraph
          */
-        protected toEdge(from: T, to: T) : Edge<T> {
+        protected toEdge(from: T, to: T, cost?: number) : Edge<T> {
             //if the graph is undirected, sort the vertices
             //so that [from, to] represents the same edge as [to, from]
             let e = this.directed ? [from, to] : [from, to].sort();
 
             return {
                 from: e[0],
-                to: e[1]
+                to: e[1],
+                cost: cost !== undefined ? cost : 1
             };
         }
 
@@ -225,14 +227,14 @@ namespace GraphTheory {
         public addEdge(edge: Edge<T>) : void {
             if (this.hasEdge(edge)) return;
 
-            if (edge['cost'] === undefined) edge['cost'] = 1;
+            let e = this.toEdge(edge.from, edge.to, edge['cost']);
 
-            this.edges.push(edge);
-            this.adjacency_list.get(edge.from).push(edge.to);
+            this.edges.push(e);
+            this.adjacency_list.get(e.from).push(e.to);
 
             //if the graph is directed, it's an arc -> add [from, to] and to [to, from]
-            if (!this.directed && edge.from !== edge.to) {
-                this.adjacency_list.get(edge.to).push(edge.from);
+            if (!this.directed && e.from !== e.to) {
+                this.adjacency_list.get(e.to).push(e.from);
             }
         }
 
@@ -342,6 +344,8 @@ namespace GraphTheory {
          * @memberOf AbstractGraph
          */
         public getEdge(i: number) : Edge<T> {
+            if (i === -1) throw new RangeError(`Invalid edge index: ${i}`);
+
             return this.edges[i];
         }
 
@@ -354,6 +358,7 @@ namespace GraphTheory {
          * @memberOf AbstractGraph
          */
         public getCost(u: T, v: T) : number {
+
             return this.getEdge(this.getEdgeIndex({
                 from: u,
                 to: v
@@ -421,7 +426,8 @@ namespace GraphTheory {
         public toJsonGraph(include_adjacency_list: boolean = false) : JsonGraph<T> {
             let graph = {
                 vertices: this.vertices,
-                edges: this.edges
+                edges: this.edges,
+                directed: this.directed
             };
 
             if (include_adjacency_list) {
@@ -466,129 +472,6 @@ namespace GraphTheory {
         };
 
         public abstract clone() : AbstractGraph<T>;
-
-         /**
-         * Draws an edge onto a canvas
-         * 
-         * @protected
-         * @param {CanvasRenderingContext2D} ctx 
-         * @param {number} vertex_radius 
-         * @param {{x: number, y: number}} from 
-         * @param {{x: number, y: number}} to 
-         * 
-         * @memberOf AbstractGraph
-         */
-        protected drawEdge(
-            ctx: CanvasRenderingContext2D,
-            vertex_radius: number,
-            edge_color: string,
-            from: {x: number, y: number},
-            to: {x: number, y: number}
-        ) : void {
-            ctx.strokeStyle = edge_color;
-            ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(to.x, to.y);
-            ctx.stroke();
-            ctx.closePath();
-        }
-
-        /**
-         * Draws a graph onto a canvas
-         * 
-         * @param {HTMLCanvasElement} cnv 
-         * @param {Map<T, {x: number, y: number}>} vertices_coords 
-         * @param {{
-         *                 show_costs: boolean,
-         *                 vertex_radius: number,
-         *                 vertex_color: string,
-         *                 edge_width: number,
-         *                 edge_color: string
-         *             }} [options={
-         *                 show_costs: false,
-         *                 vertex_radius: 10,
-         *                 vertex_color: 'lightblue',
-         *                 edge_width: 1,
-         *                 edge_color: 'black'
-         *             }] 
-         * 
-         * @memberOf Graph
-         */
-        public draw(
-            cnv: HTMLCanvasElement,
-            vertices_coords: Map<T, Vec2>,
-            options: {
-                show_costs: boolean,
-                vertex_radius: number,
-                vertex_color: string,
-                edge_width: number,
-                edge_color: string
-            } = {
-                show_costs: false,
-                vertex_radius: 10,
-                vertex_color: 'lightblue',
-                edge_width: 1,
-                edge_color: 'black'
-            }) : void {
-
-            let ctx = cnv.getContext('2d');
-                
-            ctx.clearRect(0, 0, cnv.width, cnv.height);
-            ctx.strokeStyle = options.edge_color;
-            ctx.lineWidth = options.edge_width;
-
-            //draw edges
-            for (let edge of this.getEdges()) {
-                let origin = vertices_coords.get(edge.from),
-                    dst = vertices_coords.get(edge.to);
-                this.drawEdge(ctx, options.vertex_radius, options.edge_color, origin, dst);
-                ctx.closePath();
-
-                if (options.show_costs) {
-
-                    //get a normal vector of the line directed by the edge
-                    let n = origin.dirTo(dst).normalVector();
-                    let sgn = Math.sign;
-                    let text_pos = origin.add(dst.sub(origin).div(2));
-
-                    /* show normal vector
-                    ctx.beginPath();
-                    ctx.strokeStyle = 'black';
-                    ctx.moveTo(text_pos.x, text_pos.y);
-                    let tp = text_pos.sub(n.times(50));
-                    ctx.lineTo(tp.x, tp.y);
-                    ctx.stroke();
-                    ctx.closePath();
-                    */
-
-                    text_pos = text_pos.add(n.mul(10));
-
-                    ctx.beginPath();
-                    //ctx.font = '21px'
-                    ctx.textAlign = 'center';
-                    ctx.strokeText(edge.cost.toString(), text_pos.x, text_pos.y);
-                    ctx.stroke();
-                    ctx.closePath();
-                }
-            }
-            //draw vertices
-            for (let [v, p] of vertices_coords) {
-                ctx.beginPath();
-                ctx.fillStyle = options.vertex_color;
-                ctx.arc(p.x, p.y, options.vertex_radius, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
-                ctx.closePath();
-
-                ctx.beginPath();
-                ctx.textAlign = 'center';
-                ctx.fillStyle = 'black';
-                ctx.fillText(v.toString(), p.x, p.y + 3, options.vertex_radius);
-                ctx.fill();
-                ctx.closePath();
-            }
-        }
-
 
     }
 
